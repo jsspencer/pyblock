@@ -33,7 +33,10 @@ import warnings
 # For convenience, import all submodules so the user need only import pyblock.
 import pyblock.error
 import pyblock.blocking
-import pyblock.pd_utils
+try:
+    import pyblock.pd_utils
+except ImportError:
+    warnings.warn('Pandas wrappers disabled: pandas not available.')
 try:
     import pyblock.plot
 except ImportError:
