@@ -1,17 +1,18 @@
+sudo: false
+
+dist: xenial
+
 language: python
+
 python:
     - 2.7
     - 3.3
     - 3.4
     - 3.5
+    - 3.6
+    - 3.7
 
 before_install:
-  # Use miniconda and conda packages to speed up dependency setup (principally 
-  # borrowed from https://gist.github.com/dan-blanchard/7045057
-  # and https://github.com/Jorge-C/ordination/blob/master/.travis.yml
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq libatlas-dev libatlas-base-dev liblapack-dev gfortran
-
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
         wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
         MC=$HOME/miniconda2;
