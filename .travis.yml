@@ -1,19 +1,41 @@
 dist: xenial
 
-language: python
+language: generic
 
-python:
-    - 2.7
-    - 3.3
-    - 3.4
-    - 3.5
-    - 3.6
-    - 3.7
+before_cache:
+  - conda deactivate
+  - conda remove --name pyblockenv --all
+  
+cache:
+  directories:
+    - $HOME/miniconda
+
+os:
+  - linux
+  - osx
+
+env:
+  - PYTHON_VER="2.7" 
+  - PYTHON_VER="3.3"
+  - PYTHON_VER="3.4"
+  - PYTHON_VER="3.5"
+  - PYTHON_VER="3.6"
+  - PYTHON_VER="3.7"
+
+before_install:
+  - mkdir -p $HOME/miniconda
 
 install:
-  - pip install --upgrade pip
-  - pip install -U nose numpy matplotlib pandas coverage
+  - ./.ci/miniconda.sh
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - >
+    if [[ ! "$(conda env list)" =~ "pyblockenv" ]]; then
+      conda create -q -n pyblockenv python=$PYTHON_VER 
+    fi
+  - source activate pyblockenv
+  - conda install coverage nose numpy matplotlib pandas pip
   - pip install -e .
+  - conda list
 
 script:
   - nosetests --with-coverage --cover-package=pyblock --cover-min-percentage=85 pyblock
