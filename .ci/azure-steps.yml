@@ -1,0 +1,16 @@
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(python.version)'
+    architecture: 'x64'
+
+- script: |
+    pip install --upgrade pip
+    pip install -U nose numpy matplotlib pandas coverage
+    pip install -e .
+    echo 'TkAgg' > ~/.matplotlib/matplotlibrc
+  displayName: 'Install dependencies'
+
+- script: |
+    nosetests --with-coverage --cover-package=pyblock --cover-min-percentage=85 pyblock
+  displayName: 'Running tests'
