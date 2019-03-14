@@ -22,9 +22,10 @@ class ErrorTests(unittest.TestCase):
         del self.data_len, self.reblock, self.cov_12
     def test_ratio(self):
         ratio = pyblock.error.ratio(self.reblock[1], self.reblock[2], self.cov_12, self.data_len)
-        # pain to compare pandas objects so compare numpy arrays directly...
-        test = ratio.drop('optimal block', axis=1).values
-        benchmark = self.ratio.drop('optimal block', axis=1).values
+        # pain to compare pandas objects so compare numpy arrays directly by
+        # ensuring dataframe contains only numeric data in the same ordering.
+        test = ratio.drop('optimal block', axis=1).sort_index(axis=1)
+        benchmark = self.ratio.drop('optimal block', axis=1).sort_index(axis=1)
         numpy.testing.assert_array_almost_equal(benchmark, test, decimal=8)
         self.assertEqual(ratio[ratio['optimal block'] != ''].index[0], 3)
     def test_optimal(self):
