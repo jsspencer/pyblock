@@ -1,39 +1,41 @@
-sudo: false
-
 dist: xenial
 
-language: python
+language: generic
 
-python:
-    - 2.7
-    - 3.3
-    - 3.4
-    - 3.5
-    - 3.6
-    - 3.7
+before_cache:
+  - conda deactivate
+  - conda remove --name pyblockenv --all
+  
+cache:
+  directories:
+    - $HOME/miniconda
+
+os:
+  - linux
+  - osx
+
+env:
+  - PYTHON_VER="2.7" 
+  - PYTHON_VER="3.3"
+  - PYTHON_VER="3.4"
+  - PYTHON_VER="3.5"
+  - PYTHON_VER="3.6"
+  - PYTHON_VER="3.7"
 
 before_install:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-        wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-        MC=$HOME/miniconda2;
-    else
-        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-        MC=$HOME/miniconda3;
-    fi
-  - bash ./miniconda.sh -b
-  - export PATH=$MC/bin:$PATH
-  - hash -r
-  # Update conda itself
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update --yes conda
-  # matplotlib needs a DISPLAY
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
+  - mkdir -p $HOME/miniconda
 
 install:
-  - conda create --yes -n pyblock_test python=$TRAVIS_PYTHON_VERSION nose pip numpy matplotlib pandas coverage
-  - source activate pyblock_test
-  - python setup.py install
+  - ./.ci/miniconda.sh
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - >
+    if [[ ! "$(conda env list)" =~ "pyblockenv" ]]; then
+      conda create -q -n pyblockenv python=$PYTHON_VER 
+    fi
+  - source activate pyblockenv
+  - conda install coverage nose numpy matplotlib pandas pip
+  - pip install -e .
+  - conda list
 
 script:
   - nosetests --with-coverage --cover-package=pyblock --cover-min-percentage=85 pyblock
