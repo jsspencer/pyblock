@@ -2,8 +2,6 @@ import unittest
 import pandas as pd
 import numpy
 
-import pandas.util.testing as pd_testing
-
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -34,21 +32,21 @@ class ErrorTests(unittest.TestCase):
         ratio = pyblock.error.ratio(self.reblock[1], self.reblock[2], self.cov_12, self.data_len)
         self.assertEqual(ratio[ratio['optimal block'] != ''].index[0], 3)
     def test_ratio_single(self):
-        ratio = pyblock.error.ratio(self.reblock.ix[4,1], self.reblock.ix[4,2], self.cov_12[4], self.data_len[4])
+        ratio = pyblock.error.ratio(self.reblock[1].loc[4], self.reblock[2].loc[4], self.cov_12[4], self.data_len[4])
         for key in ('mean', 'standard error'):
-            self.assertAlmostEqual(self.ratio.ix[4,key], ratio[key], 8)
+            self.assertAlmostEqual(self.ratio.iloc[4][key], ratio[key], 8)
     def test_product_single(self):
-        product = pyblock.error.product(self.reblock.ix[4,1], self.reblock.ix[4,2], self.cov_12[4], self.data_len[4])
+        product = pyblock.error.product(self.reblock[1].iloc[4], self.reblock[2].iloc[4], self.cov_12[4], self.data_len[4])
         benchmark = pd.Series({'mean':-0.00561329, 'standard error':0.01576336})
         for key in ('mean', 'standard error'):
             self.assertAlmostEqual(benchmark[key], product[key], 8)
     def test_subtraction_single(self):
-        subtraction = pyblock.error.subtraction(self.reblock.ix[4,1], self.reblock.ix[4,2], self.cov_12[4], self.data_len[4])
+        subtraction = pyblock.error.subtraction(self.reblock[1].iloc[4], self.reblock[2].iloc[4], self.cov_12[4], self.data_len[4])
         benchmark = pd.Series({'mean':-0.27652270, 'standard error':0.17002344})
         for key in ('mean', 'standard error'):
             self.assertAlmostEqual(benchmark[key], subtraction[key], 8)
     def test_addition_single(self):
-        addition = pyblock.error.addition(self.reblock.ix[4,1], self.reblock.ix[4,2], self.cov_12[4], self.data_len[4])
+        addition = pyblock.error.addition(self.reblock[1].iloc[4], self.reblock[2].iloc[4], self.cov_12[4], self.data_len[4])
         benchmark = pd.Series({'mean':0.23240407, 'standard error':0.06664526})
         for key in ('mean', 'standard error'):
             self.assertAlmostEqual(benchmark[key], addition[key], 8)
