@@ -79,7 +79,7 @@ See also
     keys = ['mean', 'standard error', 'standard error error', 'optimal block']
     multi_keys = [(col,k) for col in columns for k in keys]
     multi_keys = pd.MultiIndex.from_tuples(multi_keys)
-    null = numpy.zeros(len(columns))
+    null = numpy.zeros_like(block_stats[0].mean)
     for stat in block_stats:
         # Contents of stat:
         #     (iblock, data_len, mean, covariance, standard err,

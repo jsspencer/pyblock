@@ -32,6 +32,9 @@ class BlockingTests1D(pdBlockTest):
     def test_pdblock(self):
         (data_len, reblock, cov) = pyblock.pd_utils.reblock(self.data)
         self.check_stats(data_len, reblock, cov, tests_base.reblock_1D)
+    def test_pdblock_df(self):
+        (data_len, reblock, cov) = pyblock.pd_utils.reblock(pd.DataFrame(self.data))
+        self.check_stats(data_len, reblock, cov, tests_base.reblock_1D)
     def test_pdblock_opt(self):
         (data_len, reblock, cov) = pyblock.pd_utils.reblock(self.data)
         self.assertEqual(pyblock.pd_utils.optimal_block(reblock), tests_base.reblock_1D_opt[0])
