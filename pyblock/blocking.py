@@ -76,7 +76,7 @@ References
     if data.ndim > 2:
         raise RuntimeError("do not understand how to reblock in more than two dimensions")
 
-    if data.ndim == 1 or data.shape[0] == 1:
+    if data.ndim == 1:
         rowvar = 1
         axis = 0
         nvar = 1
