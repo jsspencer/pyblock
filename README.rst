@@ -10,9 +10,6 @@ references.
 pyblock is compatible with (and tested on!) python 2.7 and python 3.3-3.4 and should work
 on any other version supported by `pandas`.
 
-.. image:: https://travis-ci.org/jsspencer/pyblock.svg?branch=master
-    :target: https://travis-ci.org/jsspencer/pyblock
-
 .. image:: https://img.shields.io/pypi/v/pyblock.svg
         :target: https://pypi.python.org/pypi/pyblock
 
