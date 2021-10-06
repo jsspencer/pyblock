@@ -1,0 +1,14 @@
+# YAML 1.2
+---
+authors: 
+  -
+    family-names: Spencer
+    given-names: "James S."
+cff-version: "1.1.0"
+doi: "10.00000/FIXME"
+license: "BSD-3-Clause"
+message: "pyblock is a python module for performing a reblocking analysis on serially-correlated data."
+repository-code: "https://github.com/jsspencer/pyblock"
+title: pyblock
+version: "0.6"
+...
