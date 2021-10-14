@@ -44,7 +44,8 @@ where ``/path/to/`` is the (relative or absolute) path to the directory containi
 
 ::
 
-    $ pip install -e /path/to/pyblock
+    $ pip install flit
+    $ flit install --symlink
 
 ``pyblock`` can also be installed from PyPI:
 
