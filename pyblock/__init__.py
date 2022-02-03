@@ -29,6 +29,12 @@ References
 # copyright: (c) 2014 James Spencer
 # license: modified BSD license; see LICENSE for further details.
 
+__author__ = """James S. Spencer"""
+__version__ = "0.6"
+__copyright__ = "Copyright 2021, James S. Spencer"
+__license__ = "BSD-3-Clause"
+__status__ = "Production"
+
 import warnings
 # For convenience, import all submodules so the user need only import pyblock.
 import pyblock.error

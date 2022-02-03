@@ -25,11 +25,11 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "${{ matrix.python-version }}"
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip codecov coverage pytest pytest-cov numpy matplotlib pandas
-          python -m pip install -e .
+          python -m pip install --upgrade pip flit
+          flit install --symlink --extras=opts,test --deps=production
       - name: Test with pytest
         run: |
           python -m pytest pyblock --cov=pyblock --cov-report=xml --doctest-modules
