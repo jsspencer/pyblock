@@ -106,8 +106,8 @@ def reblock(data, rowvar=1, ddof=None, weights=None):
 
         if weights is None:
             nsamp = data_len
-            mean = numpy.array(numpy.mean(data, axis=axis))
-            cov = numpy.cov(data, rowvar=rowvar, ddof=ddof)
+            mean = numpy.array(numpy.mean(data, axis=axis)).reshape(nvar)
+            cov = numpy.cov(data, rowvar=rowvar, ddof=ddof).reshape((nvar, nvar))
         else:
             mean, tot_weight = numpy.average(
                 data, axis=axis, weights=weights, returned=True

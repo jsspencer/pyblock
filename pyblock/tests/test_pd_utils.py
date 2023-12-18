@@ -56,9 +56,8 @@ class BlockingTests1D(pdBlockTest):
         self.assertEqual(
             pyblock.pd_utils.optimal_block(reblock), tests_base.reblock_1D_opt[0]
         )
-        opt = reblock[("data", "optimal block")]
         self.assertEqual(
-            pyblock.pd_utils.optimal_block(opt), tests_base.reblock_1D_opt[0]
+            pyblock.pd_utils.optimal_block(reblock), tests_base.reblock_1D_opt[0]
         )
         reblock.loc[
             tests_base.reblock_1D_opt[0] - 1, ("data", "optimal block")
@@ -66,7 +65,7 @@ class BlockingTests1D(pdBlockTest):
         with self.assertRaises(ValueError):
             pyblock.pd_utils.optimal_block(reblock)
         reblock[("data", "optimal block")] = ""
-        self.assertEqual(pyblock.pd_utils.optimal_block(opt), float("inf"))
+        self.assertEqual(pyblock.pd_utils.optimal_block(reblock), float("inf"))
         self.assertTrue(pyblock.pd_utils.reblock_summary(reblock).empty)
 
     def test_weighted_pdblock(self):
