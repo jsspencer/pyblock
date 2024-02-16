@@ -59,9 +59,9 @@ class BlockingTests1D(pdBlockTest):
         self.assertEqual(
             pyblock.pd_utils.optimal_block(reblock), tests_base.reblock_1D_opt[0]
         )
-        reblock.loc[
-            tests_base.reblock_1D_opt[0] - 1, ("data", "optimal block")
-        ] = "<---"
+        reblock.loc[tests_base.reblock_1D_opt[0] - 1, ("data", "optimal block")] = (
+            "<---"
+        )
         with self.assertRaises(ValueError):
             pyblock.pd_utils.optimal_block(reblock)
         reblock[("data", "optimal block")] = ""
