@@ -118,7 +118,7 @@ def optimal_block(block_sub_info):
     Parameters
     ----------
     block_sub_info: :class:`pandas.DataFrame` or :class:`pandas.Series`
-        Reblocking data (i.e. the first item of the tuple returned by ``reblock``),
+        Reblocking data (i.e. the second item of the tuple returned by ``reblock``),
         or a subset thereof containing the statistics columns for one or more data
         items.
 
@@ -180,7 +180,7 @@ def reblock_summary(block_sub_info):
     Parameters
     ----------
     block_sub_info : :class:`pandas.DataFrame` or :class:`pandas.Series`
-        Reblocking data (i.e. the first item of the tuple returned by ``reblock``),
+        Reblocking data (i.e. the second item of the tuple returned by ``reblock``),
         or a subset thereof containing the statistics columns for one or more data
         items.
 
