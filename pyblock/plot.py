@@ -12,7 +12,7 @@ def plot_reblocking(block_info, plotfile=None, plotshow=True):
     Parameters
     ----------
     block_info : :class:`pandas.DataFrame`
-        Reblocking data (i.e. the first item of the tuple returned by ``reblock``).
+        Reblocking data (i.e. the second item of the tuple returned by ``reblock``).
     plotfile : string
         If not null, save the plot to the given filename.  If '-', then show the
         plot interactively.  See also ``plotshow``.
