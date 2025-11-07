@@ -100,6 +100,7 @@ def reblock(data, axis=0, weights=None):
     block_info = pd.concat(block_info, axis=1, keys=iblock).transpose()
     block_info.index.name = "reblock"
     loc = block_info.columns.get_level_values(1) == "optimal block"
+    block_info.loc[:, loc] = block_info.loc[:, loc].astype("object")
     block_info.loc[:, loc] = ""
 
     covariance = pd.concat(covariance, keys=iblock)
