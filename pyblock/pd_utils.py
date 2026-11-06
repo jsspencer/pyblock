@@ -3,46 +3,46 @@
 # copyright: (c) 2014 James Spencer
 # license: modified BSD license; see LICENSE for further details.
 
+from __future__ import annotations
+
 import numpy
 import pandas as pd
 import pyblock.blocking
 
 
-def reblock(data, axis=0, weights=None):
+def reblock(
+    data: pd.Series | pd.DataFrame,
+    axis: int = 0,
+    weights: pd.Series | pd.DataFrame | None = None,
+) -> tuple[pd.Series, pd.DataFrame, pd.DataFrame]:
     """Blocking analysis of correlated data.
 
-    Parameters
-    ----------
-    data : :class:`pandas.Series` or :class:`pandas.DataFrame`
-        Data to be blocked.  See ``axis`` for order.
-    axis : int
-        If non-zero, variables in data are in rows with the columns
-        corresponding to the observation values.  Blocking is then performed along
-        the rows.  Otherwise each column is a variable, the observations are in the
-        columns and blocking is performed down the columns.  Only used if data is
-        a :class:`pandas.DataFrame`.
-    weights : :class:`pandas.Series` or :class:`pandas.DataFrame`
-        A 1D weighting of the data to be reblocked. For multidimensional data an
-        identical weighting is applied to the data for each variable.
+    Args:
+        data: Data to be blocked. See `axis` for order.
+        axis: If non-zero, variables in data are in rows with the columns
+            corresponding to the observation values. Blocking is then performed along
+            the rows. Otherwise each column is a variable, observations are in the
+            rows and blocking is performed down the columns. Only used if data is
+            a DataFrame.
+        weights: A 1D weighting of the data to be reblocked. For multidimensional
+            data an identical weighting is applied to the data for each variable.
 
-    Returns
-    -------
-    data_len : :class:`pandas.Series`
-        Number of data points used in each reblocking iteration.  Note some
-        reblocking iterations discard a data point if there were an odd number of
-        data points in the previous iteration.
-    block_info : :class:`pandas.DataFrame`
-        Mean, standard error and estimated standard error for each variable at each
-        reblock step.
-    covariance : :class:`pandas.DataFrame`
-        Covariance matrix at each reblock step.
+    Returns:
+        A tuple containing:
+            - data_len: Number of data points used in each reblocking iteration.
+              Note some reblocking iterations discard a data point if there were
+              an odd number of data points in the previous iteration.
+            - block_info: Mean, standard error and estimated standard error for each
+              variable at each reblock step.
+            - covariance: Covariance matrix at each reblock step.
 
-    See also
-    --------
-    :func:`pyblock.blocking.reblock`:
-        numpy-based implementation; see for documentation and notes on the
-        reblocking procedure.  :func:`pyblock.pd_utils.reblock` is a simple wrapper
-        around this."""
+    Raises:
+        RuntimeError: If multidimensional weights are provided.
+
+    See Also:
+        `pyblock.blocking.reblock`: NumPy-based implementation; see for
+        documentation and notes on the reblocking procedure.
+    """
 
     try:
         columns = [data.name]
@@ -112,30 +112,25 @@ def reblock(data, axis=0, weights=None):
     return (data_len, block_info, covariance)
 
 
-def optimal_block(block_sub_info):
+def optimal_block(block_sub_info: pd.DataFrame | pd.Series) -> int | float:
     """Get the optimal block value from the reblocking data.
 
-    Parameters
-    ----------
-    block_sub_info: :class:`pandas.DataFrame` or :class:`pandas.Series`
-        Reblocking data (i.e. the first item of the tuple returned by ``reblock``),
-        or a subset thereof containing the statistics columns for one or more data
-        items.
+    Args:
+        block_sub_info: Reblocking data (i.e. the second item of the tuple returned by
+            `reblock`), or a subset thereof containing the statistics columns for
+            one or more data items.
 
-    Returns
-    -------
-    index : int
+    Returns:
         Reblocking index corresponding to the reblocking iteration at which serial
         correlation has been removed (as estimated by the procedure in
-        ``pyblock.blocking.find_optimal_block``).  If multiple data sets are passed
-        in block_sub_info, this is the maximum index out of all data sets.  Set to
+        `pyblock.blocking.find_optimal_block`). If multiple data sets are passed
+        in block_sub_info, this is the maximum index out of all data sets. Set to
         inf if an optimal block is not found for a data set.
 
-    Raises
-    ------
-    ValueError
-        block_sub_info contains no Series or column in DataFrame named 'optimal
-        block'."""
+    Raises:
+        ValueError: If block_sub_info contains no Series or column in DataFrame
+            named 'optimal block', or if multiple entries are listed as optimal.
+    """
 
     # Handle the following cases:
     # * Series with optimal block in it.
@@ -174,24 +169,21 @@ def optimal_block(block_sub_info):
     return opt
 
 
-def reblock_summary(block_sub_info):
+def reblock_summary(block_sub_info: pd.DataFrame | pd.Series) -> pd.DataFrame:
     """Get the data corresponding to the optimal block from the reblocking data.
 
-    Parameters
-    ----------
-    block_sub_info : :class:`pandas.DataFrame` or :class:`pandas.Series`
-        Reblocking data (i.e. the first item of the tuple returned by ``reblock``),
-        or a subset thereof containing the statistics columns for one or more data
-        items.
+    Args:
+        block_sub_info: Reblocking data (i.e. the second item of the tuple returned by
+            `reblock`), or a subset thereof containing the statistics columns for
+            one or more data items.
 
-    Returns
-    -------
-    summary : :class:`pandas.DataFrame`
+    Returns:
         Mean, standard error and estimate of the error in the standard error
         corresponding to the optimal block size in the reblocking data (or largest
-        optimal size if multiple data sets are given.  The index is labelled with
-        the data name, if known.  An empty DataFrame is returned if no optimal block
-        size was found."""
+        optimal size if multiple data sets are given). The index is labelled with
+        the data name, if known. An empty DataFrame is returned if no optimal block
+        size was found.
+    """
     opt = optimal_block(block_sub_info)
     if opt < float("inf"):
         summary = block_sub_info.loc[opt]

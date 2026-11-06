@@ -3,27 +3,32 @@
 # copyright: (c) 2015 James Spencer
 # license: modified BSD license; see LICENSE for further details.
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 
+if TYPE_CHECKING:
+    import matplotlib.figure
+    import pandas as pd
 
-def plot_reblocking(block_info, plotfile=None, plotshow=True):
+
+def plot_reblocking(
+    block_info: pd.DataFrame,
+    plotfile: str | None = None,
+    plotshow: bool = True,
+) -> matplotlib.figure.Figure:
     """Plot the reblocking data.
 
-    Parameters
-    ----------
-    block_info : :class:`pandas.DataFrame`
-        Reblocking data (i.e. the first item of the tuple returned by ``reblock``).
-    plotfile : string
-        If not null, save the plot to the given filename.  If '-', then show the
-        plot interactively.  See also ``plotshow``.
-    plotshow : bool
-        If ``plotfile`` is not given or is '-', then show the plot interactively.
+    Args:
+        block_info: Reblocking data (i.e. the second item of the tuple returned by `reblock`).
+        plotfile: If not null, save the plot to the given filename. If '-', then show the
+            plot interactively.
+        plotshow: If `plotfile` is not given or is '-', then show the plot interactively.
 
-    Returns
-    -------
-    fig : :class:`matplotlib.figure.Figure`
-        plot of the reblocking data."""
-
+    Returns:
+        Figure containing the plot of the reblocking data.
+    """
     fig = plt.figure()
     data_sets = block_info.columns.get_level_values(0).unique()
 
@@ -32,8 +37,10 @@ def plot_reblocking(block_info, plotfile=None, plotshow=True):
 
         # There should only be (at most) one non-null value for optimal block.
         opt = block_info[block_info[(col, "optimal block")] != ""].index.values
-        if opt:
+        if len(opt) > 0:
             opt = opt[0]
+        else:
+            opt = None
 
         std_err = block_info[(col, "standard error")]
         if "standard error error" in block_info[col]:
@@ -44,19 +51,19 @@ def plot_reblocking(block_info, plotfile=None, plotshow=True):
             block_info.index, std_err, std_err_err, marker="o", label=col
         )
 
-        if opt:
+        if opt is not None:
             ax.annotate(
                 "",
                 (opt, std_err[opt] - std_err_err[opt]),
                 xytext=(0, -20),
                 textcoords="offset points",
                 arrowprops=dict(
-                    arrowstyle="->",  # color=line[0].get_color()
+                    arrowstyle="->",
                     linewidth=1.2 * line[0].get_linewidth(),
                 ),
             )
 
-        ax.legend(loc=2)
+        ax.legend(loc="upper left")
         ax.set_ylabel("standard error")
         ax.set_xlabel("Reblock iteration")
 

@@ -1,48 +1,44 @@
-"""Simple error propogation.
+"""Simple error propagation.
 
 .. note::
 
     We only implement the functions as we need them...
-
 """
 
 # copyright: (c) 2014 James Spencer
 # license: modified BSD license; see LICENSE for further details.
+
+from __future__ import annotations
 
 import numpy
 import pandas as pd
 import pyblock.pd_utils as pd_utils
 
 
-def ratio(stats_A, stats_B, cov_AB, data_len):
-    """Calculate the mean and standard error of :math:`f(A,B) = A/B`.
+def ratio(
+    stats_A: pd.Series | pd.DataFrame,
+    stats_B: pd.Series | pd.DataFrame,
+    cov_AB: float | pd.Series,
+    data_len: int | pd.Series,
+) -> pd.Series | pd.DataFrame:
+    r"""Calculate the mean and standard error of :math:`f(A,B) = A/B`.
 
-    Parameters
-    ----------
-    stats_A : :class:`pandas.Series` or :class:`pandas.DataFrame`
-        Statistics (containing at least the 'mean' and 'standard error' fields) for
-        variable :math:`A`.  The rows contain different values of these statistics
-        (e.g. from a reblocking analysis) if :class:`pandas.DataFrame` are passed.
-    stats_B : :class:`pandas.Series` or :class:`pandas.DataFrame`
-        Similarly for variable :math:`B`.
-    cov_AB : float or :class:`pandas.Series`
-        Covariance between variables :math:`A` and :math:`B`.  If ``stats_A`` and
-        ``stats_B`` are :class:`pandas.DataFrame`, then this must be
-        a :class:`pandas.Series`, with the same index as ``stats_A`` and
-        ``stats_B``.
-    data_len : int or :class:`pandas.Series`
-        Number of data points ('observations') used to obtain the statistics given
-        in ``stats_A`` and ``stats_B``.  If ``stats_A`` and ``stats_B`` are
-        :class:`pandas.DataFrame`, then this must be a :class:`pandas.Series`, with
-        the same index as ``stats_A`` and ``stats_B``.
+    Args:
+        stats_A: Statistics (containing at least the 'mean' and 'standard error' fields)
+            for variable :math:`A`. The rows contain different values of these statistics
+            (e.g. from a reblocking analysis) if a DataFrame is passed.
+        stats_B: Similarly for variable :math:`B`.
+        cov_AB: Covariance between variables :math:`A` and :math:`B`. If `stats_A` and
+            `stats_B` are DataFrames, then this must be a Series with the same index.
+        data_len: Number of data points ('observations') used to obtain the statistics
+            given in `stats_A` and `stats_B`. If `stats_A` and `stats_B` are DataFrames,
+            then this must be a Series with the same index.
 
-    Returns
-    -------
-    stats : :class:`pandas.Series` or :class:`pandas.DataFrame`
+    Returns:
         Mean and standard error (and, if possible/relevant, optimal reblock
-        iteration) for :math:`f(A,B)`.  If ``stats_A``, ``stats_B`` are
-        :class:`pandas.DataFrame`, this is a :class:`pandas.DataFrame` with the
-        same index, otherwise a :class:`pandas.Series` is returned."""
+        iteration) for :math:`f(A,B)`. If `stats_A` and `stats_B` are DataFrames,
+        this is a DataFrame with the same index; otherwise a Series is returned.
+    """
     m_A, m_B = (stats_A["mean"], stats_B["mean"])
     mean = m_A / m_B
     se_A, se_B = (stats_A["standard error"], stats_B["standard error"])
@@ -55,16 +51,22 @@ def ratio(stats_A, stats_B, cov_AB, data_len):
     return _stats_summary(mean, std_err, stats_A, stats_B)
 
 
-def product(stats_A, stats_B, cov_AB, data_len):
-    """Calculate the mean and standard error of :math:`f(A,B) = A \\times B`.
+def product(
+    stats_A: pd.Series | pd.DataFrame,
+    stats_B: pd.Series | pd.DataFrame,
+    cov_AB: float | pd.Series,
+    data_len: int | pd.Series,
+) -> pd.Series | pd.DataFrame:
+    r"""Calculate the mean and standard error of :math:`f(A,B) = A \times B`.
 
-    Parameters
-    ----------
-    See :func:`ratio`.
+    Args:
+        stats_A: See `ratio`.
+        stats_B: See `ratio`.
+        cov_AB: See `ratio`.
+        data_len: See `ratio`.
 
-    Returns
-    -------
-    See :func:`ratio`.
+    Returns:
+        See `ratio`.
     """
     m_A, m_B = (stats_A["mean"], stats_B["mean"])
     mean = m_A * m_B
@@ -78,16 +80,23 @@ def product(stats_A, stats_B, cov_AB, data_len):
     return _stats_summary(mean, std_err, stats_A, stats_B)
 
 
-def subtraction(stats_A, stats_B, cov_AB, data_len):
-    """Calculate the mean and standard error of :math:`f(A,B) = A - B`.
+def subtraction(
+    stats_A: pd.Series | pd.DataFrame,
+    stats_B: pd.Series | pd.DataFrame,
+    cov_AB: float | pd.Series,
+    data_len: int | pd.Series,
+) -> pd.Series | pd.DataFrame:
+    r"""Calculate the mean and standard error of :math:`f(A,B) = A - B`.
 
-    Parameters
-    ----------
-    See :func:`ratio`.
+    Args:
+        stats_A: See `ratio`.
+        stats_B: See `ratio`.
+        cov_AB: See `ratio`.
+        data_len: See `ratio`.
 
-    Returns
-    -------
-    See :func:`ratio`."""
+    Returns:
+        See `ratio`.
+    """
     mean = stats_A["mean"] - stats_B["mean"]
     se = "standard error"
     std_err = stats_A[se] ** 2 + stats_B[se] ** 2 - 2 * cov_AB / data_len
@@ -95,16 +104,23 @@ def subtraction(stats_A, stats_B, cov_AB, data_len):
     return _stats_summary(mean, std_err, stats_A, stats_B)
 
 
-def addition(stats_A, stats_B, cov_AB, data_len):
-    """Calculate the mean and standard error of :math:`f(A,B) = A \\plus B`.
+def addition(
+    stats_A: pd.Series | pd.DataFrame,
+    stats_B: pd.Series | pd.DataFrame,
+    cov_AB: float | pd.Series,
+    data_len: int | pd.Series,
+) -> pd.Series | pd.DataFrame:
+    r"""Calculate the mean and standard error of :math:`f(A,B) = A + B`.
 
-    Parameters
-    ----------
-    See :func:`ratio`.
+    Args:
+        stats_A: See `ratio`.
+        stats_B: See `ratio`.
+        cov_AB: See `ratio`.
+        data_len: See `ratio`.
 
-    Returns
-    -------
-    See :func:`ratio`."""
+    Returns:
+        See `ratio`.
+    """
     mean = stats_A["mean"] + stats_B["mean"]
     se = "standard error"
     std_err = stats_A[se] ** 2 + stats_B[se] ** 2 + 2 * cov_AB / data_len
@@ -112,23 +128,24 @@ def addition(stats_A, stats_B, cov_AB, data_len):
     return _stats_summary(mean, std_err, stats_A, stats_B)
 
 
-def _stats_summary(mean, std_err, stats_A, stats_B):
-    """Summarise error propogation.
+def _stats_summary(
+    mean: float | pd.Series,
+    std_err: float | pd.Series,
+    stats_A: pd.Series | pd.DataFrame,
+    stats_B: pd.Series | pd.DataFrame,
+) -> pd.Series | pd.DataFrame:
+    r"""Summarise error propagation.
 
-    Parameters
-    ----------
-    mean : float or :class:`pandas.Series`
-        mean of of :math:`f(A,B)`.
-    std_err: float or :class:`pandas.Series`
-        standard error of :math:`f(A,B)`.
-    stats_A, stats_B:
-        see `func:`ratio`.
+    Args:
+        mean: Mean of :math:`f(A,B)`.
+        std_err: Standard error of :math:`f(A,B)`.
+        stats_A: Statistics for variable A.
+        stats_B: Statistics for variable B.
 
-    Returns
-    -------
-
-    See :func:`ratio`."""
-    stats_dict = dict((("mean", mean), ("standard error", std_err)))
+    Returns:
+        DataFrame or Series containing summarised statistics.
+    """
+    stats_dict = {"mean": mean, "standard error": std_err}
     try:
         stats = pd.DataFrame(stats_dict)
         if all("optimal block" in stat.columns for stat in (stats_A, stats_B)):
@@ -144,40 +161,36 @@ def _stats_summary(mean, std_err, stats_A, stats_B):
     return stats
 
 
-def pretty_fmt_err(val, err):
+def pretty_fmt_err(val: float | int, err: float | int) -> str:
     """Pretty formatting of a value and associated error.
 
-    Parameters
-    ----------
+    Args:
+        val: A (noisy) value.
+        err: Error associated with the value.
 
-    val : number
-        a (noisy) value.
-    err: number
-        error associated with the value.
-
-    Returns
-    -------
-    val_str : str
+    Returns:
         Value to the number of significant digits known, with the error in the
         last digit in brackets.
 
-    Examples
-    --------
-    >>> pretty_fmt_err(1.2345, 0.01)
-    '1.23(1)'
-    >>> pretty_fmt_err(12331, 40)
-    '12330(40)'
+    Examples:
+        >>> pretty_fmt_err(1.2345, 0.01)
+        '1.23(1)'
+        >>> pretty_fmt_err(12331, 40)
+        '12330(40)'
 
-    Notes
-    -----
-    Rounding is handled with Python's `round` function, which handles rounding numbers at the midpoint in a range (eg 5 if round to the nearest 10) in a slightly odd way.  As we're normally dealing with noisy data and rounding to remove more than just one significant figure, this is unlikely to impact us.
+    Notes:
+        Rounding is handled with Python's `round` function, which handles rounding
+        numbers at the midpoint in a range (e.g. 5 if round to the nearest 10) in
+        a slightly odd way. As we're normally dealing with noisy data and rounding
+        to remove more than just one significant figure, this is unlikely to
+        impact us.
     """
     if numpy.isinf(val):
-        return "%s" % (val,)
+        return f"{val}"
     if numpy.isinf(err):
-        return "%s(%s)" % (val, err)
+        return f"{val}({err})"
     if abs(err) < numpy.finfo(float(err)).eps:
-        return "%s(0)" % (val,)
+        return f"{val}(0)"
 
     # Sig figs of accuracy is:
     sig_figs = lambda x: -int(numpy.floor(numpy.log10(x)))
@@ -185,7 +198,7 @@ def pretty_fmt_err(val, err):
     # Round value and error to accuracy known:
     sig_err = round(err, sig_figs(err))
     # Use the rounded error in case the error was 'rounded up' (e.g. 9.8->10) to
-    # get the number of sif figs the value is actually known to.
+    # get the number of sig figs the value is actually known to.
     sig_err_figs = sig_figs(sig_err)
     sig_val = round(val, sig_err_figs)
 
@@ -196,6 +209,6 @@ def pretty_fmt_err(val, err):
         fmt = "%i(%i)"
     else:
         sig_err = int(round(sig_err * 10**sig_err_figs))
-        fmt = "%%.%if(%%i)" % (sig_err_figs)
+        fmt = f"%.{sig_err_figs}f(%i)"
 
     return fmt % (sig_val, sig_err)
