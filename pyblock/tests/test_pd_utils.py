@@ -44,15 +44,15 @@ class BlockingTests1D(pdBlockTest):
         del self.data
 
     def test_pdblock(self):
-        (data_len, reblock, cov) = pyblock.pd_utils.reblock(self.data)
+        data_len, reblock, cov = pyblock.pd_utils.reblock(self.data)
         self.check_stats(data_len, reblock, cov, tests_base.reblock_1D)
 
     def test_pdblock_df(self):
-        (data_len, reblock, cov) = pyblock.pd_utils.reblock(pd.DataFrame(self.data))
+        data_len, reblock, cov = pyblock.pd_utils.reblock(pd.DataFrame(self.data))
         self.check_stats(data_len, reblock, cov, tests_base.reblock_1D)
 
     def test_pdblock_opt(self):
-        (data_len, reblock, cov) = pyblock.pd_utils.reblock(self.data)
+        data_len, reblock, cov = pyblock.pd_utils.reblock(self.data)
         self.assertEqual(
             pyblock.pd_utils.optimal_block(reblock), tests_base.reblock_1D_opt[0]
         )
@@ -70,12 +70,12 @@ class BlockingTests1D(pdBlockTest):
 
     def test_weighted_pdblock(self):
         weights = pd.Series(tests_base.weights)
-        (data_len, reblock, cov) = pyblock.pd_utils.reblock(self.data, weights=weights)
+        data_len, reblock, cov = pyblock.pd_utils.reblock(self.data, weights=weights)
         self.check_stats(data_len, reblock, cov, tests_base.weighted_reblock_1D)
 
     def test_weighted_df_pdblock(self):
         weights = pd.DataFrame({1: tests_base.weights})
-        (data_len, reblock, cov) = pyblock.pd_utils.reblock(self.data, weights=weights)
+        data_len, reblock, cov = pyblock.pd_utils.reblock(self.data, weights=weights)
         self.check_stats(data_len, reblock, cov, tests_base.weighted_reblock_1D)
 
 
@@ -87,16 +87,16 @@ class BlockingTests2D(pdBlockTest):
         del self.data
 
     def test_pdblock(self):
-        (data_len, reblock, cov) = pyblock.pd_utils.reblock(self.data)
+        data_len, reblock, cov = pyblock.pd_utils.reblock(self.data)
         self.check_stats(data_len, reblock, cov, tests_base.reblock_2D)
 
     def test_pdblock_rows(self):
         data = self.data.T
-        (data_len, reblock, cov) = pyblock.pd_utils.reblock(data, axis=1)
+        data_len, reblock, cov = pyblock.pd_utils.reblock(data, axis=1)
         self.check_stats(data_len, reblock, cov, tests_base.reblock_2D)
 
     def test_pdblock_opt(self):
-        (data_len, reblock, cov) = pyblock.pd_utils.reblock(self.data)
+        data_len, reblock, cov = pyblock.pd_utils.reblock(self.data)
         self.assertEqual(
             pyblock.pd_utils.optimal_block(reblock), max(tests_base.reblock_2D_opt)
         )
@@ -108,18 +108,18 @@ class BlockingTests2D(pdBlockTest):
 
     def test_weighted_pdblock(self):
         weights = pd.Series(tests_base.weights)
-        (data_len, reblock, cov) = pyblock.pd_utils.reblock(self.data, weights=weights)
+        data_len, reblock, cov = pyblock.pd_utils.reblock(self.data, weights=weights)
         self.check_stats(data_len, reblock, cov, tests_base.weighted_reblock_2D)
 
     def test_2D_weighted_pdblock(self):
         weights = pd.DataFrame({1: tests_base.weights, 2: tests_base.weights})
         with self.assertRaises(RuntimeError):
-            (data_len, reblock, cov) = pyblock.pd_utils.reblock(
+            data_len, reblock, cov = pyblock.pd_utils.reblock(
                 self.data, weights=weights
             )
 
     def test_pdblock_summary(self):
-        (data_len, reblock, cov) = pyblock.pd_utils.reblock(self.data)
+        data_len, reblock, cov = pyblock.pd_utils.reblock(self.data)
         summary = pyblock.pd_utils.reblock_summary(reblock)
         opt = tests_base.reblock_2D[max(tests_base.reblock_2D_opt)]
         opt = numpy.array([opt[2], opt[4], opt[5]]).transpose()

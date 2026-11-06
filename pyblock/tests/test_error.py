@@ -14,7 +14,7 @@ class ErrorTests(unittest.TestCase):
         rand = numpy.random.RandomState(seed=5)
         ndata = 2**5
         data = pd.DataFrame({1: rand.randn(ndata), 2: rand.randn(ndata)})
-        (self.data_len, self.reblock, self.cov_12) = pyblock.pd_utils.reblock(data)
+        self.data_len, self.reblock, self.cov_12 = pyblock.pd_utils.reblock(data)
         self.cov_12 = self.cov_12.xs(1, level=1)[2]
         self.ratio = pd.DataFrame(
             {

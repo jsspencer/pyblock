@@ -43,9 +43,9 @@ def ratio(stats_A, stats_B, cov_AB, data_len):
         iteration) for :math:`f(A,B)`.  If ``stats_A``, ``stats_B`` are
         :class:`pandas.DataFrame`, this is a :class:`pandas.DataFrame` with the
         same index, otherwise a :class:`pandas.Series` is returned."""
-    (m_A, m_B) = (stats_A["mean"], stats_B["mean"])
+    m_A, m_B = (stats_A["mean"], stats_B["mean"])
     mean = m_A / m_B
-    (se_A, se_B) = (stats_A["standard error"], stats_B["standard error"])
+    se_A, se_B = (stats_A["standard error"], stats_B["standard error"])
     std_err = abs(
         mean
         * numpy.sqrt(
@@ -66,9 +66,9 @@ def product(stats_A, stats_B, cov_AB, data_len):
     -------
     See :func:`ratio`.
     """
-    (m_A, m_B) = (stats_A["mean"], stats_B["mean"])
+    m_A, m_B = (stats_A["mean"], stats_B["mean"])
     mean = m_A * m_B
-    (se_A, se_B) = (stats_A["standard error"], stats_B["standard error"])
+    se_A, se_B = (stats_A["standard error"], stats_B["standard error"])
     std_err = abs(
         mean
         * numpy.sqrt(
