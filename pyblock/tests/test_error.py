@@ -1,11 +1,6 @@
 import unittest
-import pandas as pd
 import numpy
-
-import os
-import sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
+import pandas as pd
 import pyblock
 
 
@@ -36,9 +31,6 @@ class ErrorTests(unittest.TestCase):
             }
         )
         self.ratio.index.name = "reblock"
-
-    def tearDown(self):
-        del self.data_len, self.reblock, self.cov_12
 
     def test_ratio(self):
         ratio = pyblock.error.ratio(

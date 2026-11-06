@@ -1,11 +1,6 @@
+import unittest
 import numpy
 import pandas as pd
-import unittest
-
-import os
-import sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 import pyblock
 import pyblock.tests.base as tests_base
 
@@ -39,9 +34,6 @@ class pdBlockTest(unittest.TestCase):
 class BlockingTests1D(pdBlockTest):
     def setUp(self):
         self.data = pd.Series(tests_base.data_1D)
-
-    def tearDown(self):
-        del self.data
 
     def test_pdblock(self):
         data_len, reblock, cov = pyblock.pd_utils.reblock(self.data)
@@ -82,9 +74,6 @@ class BlockingTests1D(pdBlockTest):
 class BlockingTests2D(pdBlockTest):
     def setUp(self):
         self.data = pd.DataFrame({1: tests_base.data_2D[0], 2: tests_base.data_2D[1]})
-
-    def tearDown(self):
-        del self.data
 
     def test_pdblock(self):
         data_len, reblock, cov = pyblock.pd_utils.reblock(self.data)

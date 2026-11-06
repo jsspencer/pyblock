@@ -1,10 +1,5 @@
-import numpy
 import unittest
-
-import os
-import sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
+import numpy
 import pyblock
 import pyblock.tests.base as tests_base
 
@@ -30,12 +25,6 @@ class BlockingTests1D(BlockTest):
         self.benchmark_opt = tests_base.reblock_1D_opt
         self.benchmark_ddof = tests_base.reblock_1D_ddof
 
-    def tearDown(self):
-        del self.data
-        del self.weights
-        del self.benchmark
-        del self.benchmark_opt
-
     def test_reblock(self):
         stats = pyblock.blocking.reblock(self.data, weights=self.weights)
         self.check_stats(self.benchmark, stats)
@@ -54,7 +43,7 @@ class BlockingTests1D(BlockTest):
 
 class UnitWeightedBlockingTests1D(BlockingTests1D):
     def setUp(self):
-        super(UnitWeightedBlockingTests1D, self).setUp()
+        super().setUp()
         self.weights = numpy.ones((self.data.shape[0]))
 
 
@@ -82,9 +71,6 @@ class BlockingTests2D(BlockTest):
         self.benchmark = tests_base.reblock_2D
         self.benchmark_opt = tests_base.reblock_2D_opt
 
-    def tearDown(self):
-        del self.data
-
     def test_reblock(self):
         stats = pyblock.blocking.reblock(self.data, weights=self.weights)
         self.check_stats(self.benchmark, stats)
@@ -109,7 +95,7 @@ class BlockingTests2D(BlockTest):
 
 class UnitWeightedBlockingTests2D(BlockingTests2D):
     def setUp(self):
-        super(UnitWeightedBlockingTests2D, self).setUp()
+        super().setUp()
         self.weights = numpy.ones((self.data.shape[1]))
 
 
@@ -128,10 +114,7 @@ class WeightedBlockingTests2D(BlockingTests2D):
 
 class BlockingTests3D(unittest.TestCase):
     def setUp(self):
-        self.data = numpy.random.randn(3, 3, 3)
-
-    def tearDown(self):
-        del self.data
+        self.data = numpy.empty((3, 3, 3))
 
     def test_reblock(self):
         with self.assertRaises(RuntimeError):
