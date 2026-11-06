@@ -132,16 +132,8 @@ def reblock(
                 ds = data - mean
                 cov = bessel * numpy.sum(norm_wts * ds * ds)
             else:
-                ds = numpy.empty((nvar, data_len))
-                for i in range(nvar):
-                    d = data[i, :] if rowvar else data[:, i]
-                    ds[i] = d - mean[i]
-                cov = numpy.zeros((nvar, nvar))
-                for i in range(nvar):
-                    for j in range(i, nvar):
-                        cov[i, j] = bessel * numpy.sum(norm_wts * ds[i] * ds[j])
-            if nvar > 1:
-                cov = cov + cov.T - numpy.diag(cov.diagonal())
+                ds = (data if rowvar else data.T) - mean[:, None]
+                cov = bessel * ((ds * norm_wts) @ ds.T)
 
         if cov.ndim < 2:
             std_err = numpy.array(numpy.sqrt(cov / nsamp))
@@ -179,7 +171,7 @@ def reblock(
 
 def find_optimal_block(
     ndata: int,
-    stats: Sequence[BlockTuple] | Sequence[tuple],
+    stats: Sequence[BlockTuple],
 ) -> list[int | float]:
     """Find the optimal block length from a reblocking calculation.
 
@@ -246,18 +238,18 @@ def find_optimal_block(
     """
     # Get the number of variables by looking at the number of means calculated
     # in the first stats entry.
-    nvariables = stats[0][2].size
-    optimal_block: list[int | float] = [float("NaN")] * nvariables
+    nvariables = numpy.asarray(stats[0].mean).size
+    optimal_block: list[int | float] = [numpy.nan] * nvariables
     # If the data was just of a single variable, then the numpy arrays returned
     # by blocking are all 0-dimensions. Make sure they're 1-D so we can use
     # enumerate safely (just to keep the code short).
-    std_err_first = numpy.array(stats[0][4], ndmin=1)
-    for iblock, data_len, mean, cov, std_err, std_err_err in reversed(stats):
+    std_err_first = numpy.array(stats[0].std_err, ndmin=1)
+    for stat in reversed(stats):
         # 2**iblock data points per block.
-        B3 = 2 ** (3 * iblock)
-        std_err = numpy.array(std_err, ndmin=1)
+        B3 = 8**stat.block
+        std_err = numpy.array(stat.std_err, ndmin=1)
         for i, var_std_err in enumerate(std_err):
             if B3 > 2 * ndata * (var_std_err / std_err_first[i]) ** 4:
-                optimal_block[i] = iblock
+                optimal_block[i] = stat.block
 
     return optimal_block
