@@ -1,141 +1,128 @@
-import unittest
-import numpy
+from __future__ import annotations
+
+import numpy as np
 import pandas as pd
+import pytest
+
 import pyblock
 import pyblock.tests.base as tests_base
 
 
-class pdBlockTest(unittest.TestCase):
-    def check_stats(self, data_len, reblock, cov, benchmark):
-        bench_slice = numpy.array([x[0] for x in benchmark])
-        numpy.testing.assert_array_equal(data_len.index.to_numpy(), bench_slice)
+def assert_pd_stats_equal(data_len, reblock, cov, benchmark):
+    bench_slice = np.array([x[0] for x in benchmark])
+    np.testing.assert_array_equal(data_len.index.to_numpy(), bench_slice)
 
-        bench_slice = numpy.array([x[1] for x in benchmark])
-        numpy.testing.assert_array_equal(data_len.to_numpy(), bench_slice)
+    bench_slice = np.array([x[1] for x in benchmark])
+    np.testing.assert_array_equal(data_len.to_numpy(), bench_slice)
 
-        for ind, key in [
-            (2, "mean"),
-            (4, "standard error"),
-            (5, "standard error error"),
-        ]:
-            bench_slice = numpy.array([x[ind] for x in benchmark]).flatten()
-            numpy.testing.assert_array_almost_equal(
-                reblock.xs(key, axis=1, level=1).to_numpy().flatten(),
-                bench_slice,
-                decimal=8,
-            )
-
-        bench_slice = numpy.array([x[3] for x in benchmark]).flatten()
-        numpy.testing.assert_array_almost_equal(
-            cov.to_numpy().flatten(), bench_slice, decimal=8
+    for ind, key in [
+        (2, "mean"),
+        (4, "standard error"),
+        (5, "standard error error"),
+    ]:
+        bench_slice = np.array([x[ind] for x in benchmark]).flatten()
+        np.testing.assert_array_almost_equal(
+            reblock.xs(key, axis=1, level=1).to_numpy().flatten(),
+            bench_slice,
+            decimal=8,
         )
 
+    bench_slice = np.array([x[3] for x in benchmark]).flatten()
+    np.testing.assert_array_almost_equal(
+        cov.to_numpy().flatten(), bench_slice, decimal=8
+    )
 
-class BlockingTests1D(pdBlockTest):
-    def setUp(self):
+
+class TestBlocking1D:
+    @pytest.fixture(autouse=True)
+    def setup_data(self):
         self.data = pd.Series(tests_base.data_1D)
 
     def test_pdblock(self):
         data_len, reblock, cov = pyblock.pd_utils.reblock(self.data)
-        self.check_stats(data_len, reblock, cov, tests_base.reblock_1D)
+        assert_pd_stats_equal(data_len, reblock, cov, tests_base.reblock_1D)
 
     def test_pdblock_df(self):
         data_len, reblock, cov = pyblock.pd_utils.reblock(pd.DataFrame(self.data))
-        self.check_stats(data_len, reblock, cov, tests_base.reblock_1D)
+        assert_pd_stats_equal(data_len, reblock, cov, tests_base.reblock_1D)
 
     def test_pdblock_opt(self):
         data_len, reblock, cov = pyblock.pd_utils.reblock(self.data)
-        self.assertEqual(
-            pyblock.pd_utils.optimal_block(reblock), tests_base.reblock_1D_opt[0]
-        )
-        self.assertEqual(
-            pyblock.pd_utils.optimal_block(reblock), tests_base.reblock_1D_opt[0]
-        )
+        assert pyblock.pd_utils.optimal_block(reblock) == tests_base.reblock_1D_opt[0]
         reblock.loc[tests_base.reblock_1D_opt[0] - 1, ("data", "optimal block")] = (
             "<---"
         )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             pyblock.pd_utils.optimal_block(reblock)
         reblock[("data", "optimal block")] = ""
-        self.assertEqual(pyblock.pd_utils.optimal_block(reblock), float("inf"))
-        self.assertTrue(pyblock.pd_utils.reblock_summary(reblock).empty)
+        assert pyblock.pd_utils.optimal_block(reblock) == float("inf")
+        assert pyblock.pd_utils.reblock_summary(reblock).empty
 
     def test_weighted_pdblock(self):
         weights = pd.Series(tests_base.weights)
         data_len, reblock, cov = pyblock.pd_utils.reblock(self.data, weights=weights)
-        self.check_stats(data_len, reblock, cov, tests_base.weighted_reblock_1D)
+        assert_pd_stats_equal(data_len, reblock, cov, tests_base.weighted_reblock_1D)
 
     def test_weighted_df_pdblock(self):
         weights = pd.DataFrame({1: tests_base.weights})
         data_len, reblock, cov = pyblock.pd_utils.reblock(self.data, weights=weights)
-        self.check_stats(data_len, reblock, cov, tests_base.weighted_reblock_1D)
+        assert_pd_stats_equal(data_len, reblock, cov, tests_base.weighted_reblock_1D)
 
 
-class BlockingTests2D(pdBlockTest):
-    def setUp(self):
+class TestBlocking2D:
+    @pytest.fixture(autouse=True)
+    def setup_data(self):
         self.data = pd.DataFrame({1: tests_base.data_2D[0], 2: tests_base.data_2D[1]})
 
     def test_pdblock(self):
         data_len, reblock, cov = pyblock.pd_utils.reblock(self.data)
-        self.check_stats(data_len, reblock, cov, tests_base.reblock_2D)
+        assert_pd_stats_equal(data_len, reblock, cov, tests_base.reblock_2D)
 
     def test_pdblock_rows(self):
         data = self.data.T
         data_len, reblock, cov = pyblock.pd_utils.reblock(data, axis=1)
-        self.check_stats(data_len, reblock, cov, tests_base.reblock_2D)
+        assert_pd_stats_equal(data_len, reblock, cov, tests_base.reblock_2D)
 
     def test_pdblock_opt(self):
         data_len, reblock, cov = pyblock.pd_utils.reblock(self.data)
-        self.assertEqual(
-            pyblock.pd_utils.optimal_block(reblock), max(tests_base.reblock_2D_opt)
-        )
+        assert pyblock.pd_utils.optimal_block(reblock) == max(tests_base.reblock_2D_opt)
         for name, group in reblock.T.groupby(level=0):
-            self.assertEqual(
-                pyblock.pd_utils.optimal_block(group.T),
-                tests_base.reblock_2D_opt[name - 1],
+            assert (
+                pyblock.pd_utils.optimal_block(group.T)
+                == tests_base.reblock_2D_opt[name - 1]
             )
 
     def test_weighted_pdblock(self):
         weights = pd.Series(tests_base.weights)
         data_len, reblock, cov = pyblock.pd_utils.reblock(self.data, weights=weights)
-        self.check_stats(data_len, reblock, cov, tests_base.weighted_reblock_2D)
+        assert_pd_stats_equal(data_len, reblock, cov, tests_base.weighted_reblock_2D)
 
-    def test_2D_weighted_pdblock(self):
+    def test_2d_weighted_pdblock(self):
         weights = pd.DataFrame({1: tests_base.weights, 2: tests_base.weights})
-        with self.assertRaises(RuntimeError):
-            data_len, reblock, cov = pyblock.pd_utils.reblock(
-                self.data, weights=weights
-            )
+        with pytest.raises(RuntimeError):
+            pyblock.pd_utils.reblock(self.data, weights=weights)
 
     def test_pdblock_summary(self):
         data_len, reblock, cov = pyblock.pd_utils.reblock(self.data)
         summary = pyblock.pd_utils.reblock_summary(reblock)
         opt = tests_base.reblock_2D[max(tests_base.reblock_2D_opt)]
-        opt = numpy.array([opt[2], opt[4], opt[5]]).transpose()
-        numpy.testing.assert_array_almost_equal(
+        opt = np.array([opt[2], opt[4], opt[5]]).transpose()
+        np.testing.assert_array_almost_equal(
             summary.to_numpy().flatten(), opt.flatten(), decimal=8
         )
         summary = pyblock.pd_utils.reblock_summary(reblock[1])
-        numpy.testing.assert_array_almost_equal(
+        np.testing.assert_array_almost_equal(
             summary.to_numpy().flatten(), opt[0], decimal=8
         )
 
 
-class OptimalErrorTest(unittest.TestCase):
-    def test1(self):
-        data = pd.Series(numpy.zeros(5), name="rand")
-        with self.assertRaises(ValueError):
+class TestOptimalError:
+    def test_series_without_optimal_block_raises(self):
+        data = pd.Series(np.zeros(5), name="rand")
+        with pytest.raises(ValueError):
             pyblock.pd_utils.optimal_block(data)
 
-    def test2(self):
-        data = pd.DataFrame({1: numpy.zeros(5), 2: numpy.zeros(5)})
-        with self.assertRaises(ValueError):
+    def test_dataframe_without_optimal_block_raises(self):
+        data = pd.DataFrame({1: np.zeros(5), 2: np.zeros(5)})
+        with pytest.raises(ValueError):
             pyblock.pd_utils.optimal_block(data)
-
-
-def main():
-    unittest.main()
-
-
-if __name__ == "__main__":
-    main()
