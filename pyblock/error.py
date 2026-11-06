@@ -146,19 +146,27 @@ def _stats_summary(
         DataFrame or Series containing summarised statistics.
     """
     stats_dict = {"mean": mean, "standard error": std_err}
-    try:
+    if isinstance(mean, pd.Series):
         stats = pd.DataFrame(stats_dict)
-        if all("optimal block" in stat.columns for stat in (stats_A, stats_B)):
-            opt_A = pd_utils.optimal_block(stats_A)
-            opt_B = pd_utils.optimal_block(stats_B)
-            if opt_A > opt_B:
-                stats["optimal block"] = stats_A["optimal block"]
-            else:
-                stats["optimal block"] = stats_B["optimal block"]
-    except ValueError:
-        # Were given a single data point rather than a set.
+        if isinstance(stats_A, pd.DataFrame) and isinstance(stats_B, pd.DataFrame):
+            if (
+                "optimal block" in stats_A.columns
+                and "optimal block" in stats_B.columns
+            ):
+                opt_A = pd_utils.optimal_block(stats_A)
+                opt_B = pd_utils.optimal_block(stats_B)
+                if opt_A > opt_B:
+                    stats["optimal block"] = stats_A["optimal block"]
+                else:
+                    stats["optimal block"] = stats_B["optimal block"]
+    else:
         stats = pd.Series(stats_dict)
     return stats
+
+
+def _calc_sig_figs(x: float) -> int:
+    """Calculate the number of significant figures of decimal accuracy."""
+    return -int(numpy.floor(numpy.log10(x)))
 
 
 def pretty_fmt_err(val: float | int, err: float | int) -> str:
@@ -192,23 +200,12 @@ def pretty_fmt_err(val: float | int, err: float | int) -> str:
     if abs(err) < numpy.finfo(float(err)).eps:
         return f"{val}(0)"
 
-    # Sig figs of accuracy is:
-    sig_figs = lambda x: -int(numpy.floor(numpy.log10(x)))
-
-    # Round value and error to accuracy known:
-    sig_err = round(err, sig_figs(err))
-    # Use the rounded error in case the error was 'rounded up' (e.g. 9.8->10) to
-    # get the number of sig figs the value is actually known to.
-    sig_err_figs = sig_figs(sig_err)
+    sig_err = round(err, _calc_sig_figs(err))
+    sig_err_figs = _calc_sig_figs(sig_err)
     sig_val = round(val, sig_err_figs)
 
-    # Format.
     if sig_err > 1:
-        sig_val = int(sig_val)
-        sig_err = int(round(sig_err))
-        fmt = "%i(%i)"
+        return f"{int(sig_val)}({int(round(sig_err))})"
     else:
-        sig_err = int(round(sig_err * 10**sig_err_figs))
-        fmt = f"%.{sig_err_figs}f(%i)"
-
-    return fmt % (sig_val, sig_err)
+        err_val = int(round(sig_err * 10**sig_err_figs))
+        return f"{sig_val:.{sig_err_figs}f}({err_val})"
