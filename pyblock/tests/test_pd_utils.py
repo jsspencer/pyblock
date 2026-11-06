@@ -41,20 +41,20 @@ class TestBlocking1D:
     def test_pdblock(self):
         data_len, reblock, cov = pyblock.pd_utils.reblock(self.data)
         assert_pd_stats_equal(data_len, reblock, cov, tests_base.reblock_1D)
+        assert reblock[("data", "optimal block")].dtype == bool
 
     def test_pdblock_df(self):
         data_len, reblock, cov = pyblock.pd_utils.reblock(pd.DataFrame(self.data))
         assert_pd_stats_equal(data_len, reblock, cov, tests_base.reblock_1D)
+        assert reblock[(0, "optimal block")].dtype == bool
 
     def test_pdblock_opt(self):
         data_len, reblock, cov = pyblock.pd_utils.reblock(self.data)
         assert pyblock.pd_utils.optimal_block(reblock) == tests_base.reblock_1D_opt[0]
-        reblock.loc[tests_base.reblock_1D_opt[0] - 1, ("data", "optimal block")] = (
-            "<---"
-        )
+        reblock.loc[tests_base.reblock_1D_opt[0] - 1, ("data", "optimal block")] = True
         with pytest.raises(ValueError):
             pyblock.pd_utils.optimal_block(reblock)
-        reblock[("data", "optimal block")] = ""
+        reblock[("data", "optimal block")] = False
         assert pyblock.pd_utils.optimal_block(reblock) == float("inf")
         assert pyblock.pd_utils.reblock_summary(reblock).empty
 
@@ -126,3 +126,14 @@ class TestOptimalError:
         data = pd.DataFrame({1: np.zeros(5), 2: np.zeros(5)})
         with pytest.raises(ValueError):
             pyblock.pd_utils.optimal_block(data)
+
+    def test_invalid_type_raises(self):
+        with pytest.raises(TypeError):
+            pyblock.pd_utils.optimal_block([1, 2, 3])
+
+        with pytest.raises(TypeError):
+            pyblock.pd_utils.reblock("invalid_data")
+
+    def test_optimal_block_typed_series(self):
+        s = pd.Series([False, False, True], name=("var", "optimal block"))
+        assert pyblock.pd_utils.optimal_block(s) == 2

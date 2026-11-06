@@ -36,17 +36,19 @@ def plot_reblocking(
         ax = fig.add_subplot(len(data_sets), 1, i + 1)
 
         # There should only be (at most) one non-null value for optimal block.
-        opt = block_info[block_info[(col, "optimal block")] != ""].index.to_numpy()
+        opt = block_info[
+            block_info[(col, "optimal block")].astype(bool)
+        ].index.to_numpy()
         if len(opt) > 0:
             opt = opt[0]
         else:
             opt = None
 
         std_err = block_info[(col, "standard error")]
-        if "standard error error" in block_info[col]:
+        if (col, "standard error error") in block_info.columns:
             std_err_err = block_info[(col, "standard error error")]
         else:
-            std_err_err = 0 * std_err
+            std_err_err = numpy.zeros_like(std_err)
         line = ax.errorbar(
             block_info.index, std_err, std_err_err, marker="o", label=col
         )

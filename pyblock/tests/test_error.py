@@ -23,7 +23,7 @@ def error_dataset():
                 3: 0.68021031918966046,
                 4: 0.16281610758487003,
             },
-            "optimal block": {0: "", 1: "", 2: "", 3: "<---    ", 4: ""},
+            "optimal block": {0: False, 1: False, 2: False, 3: True, 4: False},
             "mean": {
                 0: -0.086689548180912318,
                 1: -0.086689548180912304,
@@ -45,14 +45,14 @@ class TestError:
         test = ratio.drop("optimal block", axis=1).sort_index(axis=1)
         benchmark = expected_ratio.drop("optimal block", axis=1).sort_index(axis=1)
         np.testing.assert_array_almost_equal(benchmark, test, decimal=8)
-        assert ratio[ratio["optimal block"] != ""].index[0] == 3
+        assert ratio[ratio["optimal block"]].index[0] == 3
 
     def test_optimal(self, error_dataset):
         data_len, reblock, cov_12, _ = error_dataset
-        reblock[(2, "optimal block")] = ""
-        reblock.loc[1, (2, "optimal block")] = "<---"
+        reblock[(2, "optimal block")] = False
+        reblock.loc[1, (2, "optimal block")] = True
         ratio = pyblock.error.ratio(reblock[1], reblock[2], cov_12, data_len)
-        assert ratio[ratio["optimal block"] != ""].index[0] == 3
+        assert ratio[ratio["optimal block"]].index[0] == 3
 
     def test_ratio_single(self, error_dataset):
         data_len, reblock, cov_12, expected_ratio = error_dataset
