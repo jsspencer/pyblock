@@ -52,9 +52,9 @@ def reblock(
     except AttributeError:
         # Have DataFrame rather than Series.
         if axis:
-            columns = data.index.values
+            columns = data.index.to_numpy()
         else:
-            columns = data.columns.values
+            columns = data.columns.to_numpy()
 
     if weights is not None:
         if isinstance(weights, pd.DataFrame):
@@ -62,9 +62,11 @@ def reblock(
                 raise RuntimeError("cannot handle multidimensional weights")
             weights = numpy.array(weights.unstack())
         else:
-            weights = weights.values
+            weights = weights.to_numpy()
 
-    block_stats = pyblock.blocking.reblock(data.values, rowvar=axis, weights=weights)
+    block_stats = pyblock.blocking.reblock(
+        data.to_numpy(), rowvar=axis, weights=weights
+    )
     data_size = data.shape[axis]
     optimal_blocks = pyblock.blocking.find_optimal_block(data_size, block_stats)
 
@@ -99,8 +101,8 @@ def reblock(
 
     block_info = pd.concat(block_info, axis=1, keys=iblock).transpose()
     block_info.index.name = "reblock"
-    loc = block_info.columns.get_level_values(1) == "optimal block"
-    block_info.loc[:, loc] = ""
+    for col in columns:
+        block_info[(col, "optimal block")] = ""
 
     covariance = pd.concat(covariance, keys=iblock)
     covariance.index.names = ["reblock", ""]

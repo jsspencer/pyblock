@@ -36,7 +36,7 @@ def plot_reblocking(
         ax = fig.add_subplot(len(data_sets), 1, i + 1)
 
         # There should only be (at most) one non-null value for optimal block.
-        opt = block_info[block_info[(col, "optimal block")] != ""].index.values
+        opt = block_info[block_info[(col, "optimal block")] != ""].index.to_numpy()
         if len(opt) > 0:
             opt = opt[0]
         else:

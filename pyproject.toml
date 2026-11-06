@@ -50,3 +50,6 @@ Documentation = "https://pyblock.readthedocs.io"
 minversion = "8.0"
 testpaths = ["pyblock/tests"]
 pythonpath = ["."]
+filterwarnings = [
+    "ignore:Plotting disabled.*:UserWarning",
+]

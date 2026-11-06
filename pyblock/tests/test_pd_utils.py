@@ -8,10 +8,10 @@ import pyblock.tests.base as tests_base
 class pdBlockTest(unittest.TestCase):
     def check_stats(self, data_len, reblock, cov, benchmark):
         bench_slice = numpy.array([x[0] for x in benchmark])
-        numpy.testing.assert_array_equal(data_len.index.values, bench_slice)
+        numpy.testing.assert_array_equal(data_len.index.to_numpy(), bench_slice)
 
         bench_slice = numpy.array([x[1] for x in benchmark])
-        numpy.testing.assert_array_equal(data_len.values, bench_slice)
+        numpy.testing.assert_array_equal(data_len.to_numpy(), bench_slice)
 
         for ind, key in [
             (2, "mean"),
@@ -20,14 +20,14 @@ class pdBlockTest(unittest.TestCase):
         ]:
             bench_slice = numpy.array([x[ind] for x in benchmark]).flatten()
             numpy.testing.assert_array_almost_equal(
-                reblock.xs(key, axis=1, level=1).values.flatten(),
+                reblock.xs(key, axis=1, level=1).to_numpy().flatten(),
                 bench_slice,
                 decimal=8,
             )
 
         bench_slice = numpy.array([x[3] for x in benchmark]).flatten()
         numpy.testing.assert_array_almost_equal(
-            cov.values.flatten(), bench_slice, decimal=8
+            cov.to_numpy().flatten(), bench_slice, decimal=8
         )
 
 
@@ -89,10 +89,10 @@ class BlockingTests2D(pdBlockTest):
         self.assertEqual(
             pyblock.pd_utils.optimal_block(reblock), max(tests_base.reblock_2D_opt)
         )
-        for x in reblock.groupby(level=0, axis=1):
+        for name, group in reblock.T.groupby(level=0):
             self.assertEqual(
-                pyblock.pd_utils.optimal_block(x[1]),
-                tests_base.reblock_2D_opt[x[0] - 1],
+                pyblock.pd_utils.optimal_block(group.T),
+                tests_base.reblock_2D_opt[name - 1],
             )
 
     def test_weighted_pdblock(self):
@@ -113,22 +113,22 @@ class BlockingTests2D(pdBlockTest):
         opt = tests_base.reblock_2D[max(tests_base.reblock_2D_opt)]
         opt = numpy.array([opt[2], opt[4], opt[5]]).transpose()
         numpy.testing.assert_array_almost_equal(
-            summary.values.flatten(), opt.flatten(), decimal=8
+            summary.to_numpy().flatten(), opt.flatten(), decimal=8
         )
         summary = pyblock.pd_utils.reblock_summary(reblock[1])
         numpy.testing.assert_array_almost_equal(
-            summary.values.flatten(), opt[0], decimal=8
+            summary.to_numpy().flatten(), opt[0], decimal=8
         )
 
 
 class OptimalErrorTest(unittest.TestCase):
     def test1(self):
-        data = pd.Series(numpy.random.randn(5), name="rand")
+        data = pd.Series(numpy.zeros(5), name="rand")
         with self.assertRaises(ValueError):
             pyblock.pd_utils.optimal_block(data)
 
     def test2(self):
-        data = pd.DataFrame({1: numpy.random.randn(5), 2: numpy.random.randn(5)})
+        data = pd.DataFrame({1: numpy.zeros(5), 2: numpy.zeros(5)})
         with self.assertRaises(ValueError):
             pyblock.pd_utils.optimal_block(data)
 
