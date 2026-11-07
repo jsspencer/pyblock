@@ -150,44 +150,13 @@ it makes working with multiple data sets more pleasant.
 
 .. code:: python
 
-    (data_length, reblock_data, covariance) = pyblock.pd_utils.reblock(rand_data)
-.. code:: python
-
-    # number of data points at each reblock iteration
-    data_length
-
-
-
-.. parsed-literal::
-
-    reblock
-    0          65536
-    1          32768
-    2          16384
-    3           8192
-    4           4096
-    5           2048
-    6           1024
-    7            512
-    8            256
-    9            128
-    10            64
-    11            32
-    12            16
-    13             8
-    14             4
-    15             2
-    Name: data length, dtype: int64
-
-
+    (reblock_data, covariance) = pyblock.pd_utils.reblock(rand_data)
 
 .. code:: python
 
-    # mean, standard error and estimate of the error in the standard error at each 
-    # reblock iteration
-    # Note the suggested reblock iteration is already indicated.
-    # pyblock names the data series 'data' if no name is provided in the
-    pandas.Series/pandas.DataFrame.
+    # reblock_data is a tidy DataFrame containing the reblocking statistics
+    # and the number of data points (ndata) at each reblock iteration.
+    # Note the suggested reblock iteration is indicated by the optimal boolean column.
     reblock_data
 
 
@@ -197,148 +166,188 @@ it makes working with multiple data sets more pleasant.
     <div style="max-height:1000px;max-width:1500px;overflow:auto;">
     <table border="1" class="dataframe">
       <thead>
-        <tr>
+        <tr style="text-align: right;">
           <th></th>
-          <th colspan="4" halign="left">data</th>
-        </tr>
-        <tr>
-          <th></th>
-          <th>mean</th>
-          <th>standard error</th>
-          <th>standard error error</th>
-          <th>optimal block</th>
-        </tr>
-        <tr>
           <th>reblock</th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
+          <th>ndata</th>
+          <th>variable</th>
+          <th>mean</th>
+          <th>std_err</th>
+          <th>std_err_err</th>
+          <th>optimal</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <th>0 </th>
-          <td> 0.029729</td>
-          <td> 0.003110</td>
-          <td> 0.000009</td>
-          <td>         </td>
+          <th>0</th>
+          <td>0</td>
+          <td>65536</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.003110</td>
+          <td>0.000009</td>
+          <td>False</td>
         </tr>
         <tr>
-          <th>1 </th>
-          <td> 0.029729</td>
-          <td> 0.004381</td>
-          <td> 0.000017</td>
-          <td>         </td>
+          <th>1</th>
+          <td>1</td>
+          <td>32768</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.004381</td>
+          <td>0.000017</td>
+          <td>False</td>
         </tr>
         <tr>
-          <th>2 </th>
-          <td> 0.029729</td>
-          <td> 0.006158</td>
-          <td> 0.000034</td>
-          <td>         </td>
+          <th>2</th>
+          <td>2</td>
+          <td>16384</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.006158</td>
+          <td>0.000034</td>
+          <td>False</td>
         </tr>
         <tr>
-          <th>3 </th>
-          <td> 0.029729</td>
-          <td> 0.008610</td>
-          <td> 0.000067</td>
-          <td>         </td>
+          <th>3</th>
+          <td>3</td>
+          <td>8192</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.008610</td>
+          <td>0.000067</td>
+          <td>False</td>
         </tr>
         <tr>
-          <th>4 </th>
-          <td> 0.029729</td>
-          <td> 0.011904</td>
-          <td> 0.000132</td>
-          <td>         </td>
+          <th>4</th>
+          <td>4</td>
+          <td>4096</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.011904</td>
+          <td>0.000132</td>
+          <td>False</td>
         </tr>
         <tr>
-          <th>5 </th>
-          <td> 0.029729</td>
-          <td> 0.016000</td>
-          <td> 0.000250</td>
-          <td>         </td>
+          <th>5</th>
+          <td>5</td>
+          <td>2048</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.016000</td>
+          <td>0.000250</td>
+          <td>False</td>
         </tr>
         <tr>
-          <th>6 </th>
-          <td> 0.029729</td>
-          <td> 0.020073</td>
-          <td> 0.000444</td>
-          <td>         </td>
+          <th>6</th>
+          <td>6</td>
+          <td>1024</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.020073</td>
+          <td>0.000444</td>
+          <td>False</td>
         </tr>
         <tr>
-          <th>7 </th>
-          <td> 0.029729</td>
-          <td> 0.022357</td>
-          <td> 0.000699</td>
-          <td>         </td>
+          <th>7</th>
+          <td>7</td>
+          <td>512</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.022357</td>
+          <td>0.000699</td>
+          <td>False</td>
         </tr>
         <tr>
-          <th>8 </th>
-          <td> 0.029729</td>
-          <td> 0.024502</td>
-          <td> 0.001085</td>
-          <td>         </td>
+          <th>8</th>
+          <td>8</td>
+          <td>256</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.024502</td>
+          <td>0.001085</td>
+          <td>False</td>
         </tr>
         <tr>
-          <th>9 </th>
-          <td> 0.029729</td>
-          <td> 0.024447</td>
-          <td> 0.001534</td>
-          <td>         </td>
+          <th>9</th>
+          <td>9</td>
+          <td>128</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.024447</td>
+          <td>0.001534</td>
+          <td>False</td>
         </tr>
         <tr>
           <th>10</th>
-          <td> 0.029729</td>
-          <td> 0.026682</td>
-          <td> 0.002377</td>
-          <td> &lt;---    </td>
+          <td>10</td>
+          <td>64</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.026682</td>
+          <td>0.002377</td>
+          <td>True</td>
         </tr>
         <tr>
           <th>11</th>
-          <td> 0.029729</td>
-          <td> 0.028474</td>
-          <td> 0.003616</td>
-          <td>         </td>
+          <td>11</td>
+          <td>32</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.028474</td>
+          <td>0.003616</td>
+          <td>False</td>
         </tr>
         <tr>
           <th>12</th>
-          <td> 0.029729</td>
-          <td> 0.028093</td>
-          <td> 0.005129</td>
-          <td>         </td>
+          <td>12</td>
+          <td>16</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.028093</td>
+          <td>0.005129</td>
+          <td>False</td>
         </tr>
         <tr>
           <th>13</th>
-          <td> 0.029729</td>
-          <td> 0.029124</td>
-          <td> 0.007784</td>
-          <td>         </td>
+          <td>13</td>
+          <td>8</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.029124</td>
+          <td>0.007784</td>
+          <td>False</td>
         </tr>
         <tr>
           <th>14</th>
-          <td> 0.029729</td>
-          <td> 0.037327</td>
-          <td> 0.015238</td>
-          <td>         </td>
+          <td>14</td>
+          <td>4</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.037327</td>
+          <td>0.015238</td>
+          <td>False</td>
         </tr>
         <tr>
           <th>15</th>
-          <td> 0.029729</td>
-          <td> 0.058877</td>
-          <td> 0.041632</td>
-          <td>         </td>
+          <td>15</td>
+          <td>2</td>
+          <td>data</td>
+          <td>0.029729</td>
+          <td>0.058877</td>
+          <td>0.041632</td>
+          <td>False</td>
         </tr>
       </tbody>
     </table>
-    <p>16 rows × 4 columns</p>
+    <p>16 rows × 7 columns</p>
     </div>
 
 
 
 .. code:: python
 
-    # Covariance matrix is not so relevant for a single data set.
+    # Covariance is a tidy DataFrame containing pairwise covariances.
     covariance
 
 
@@ -350,99 +359,128 @@ it makes working with multiple data sets more pleasant.
       <thead>
         <tr style="text-align: right;">
           <th></th>
-          <th></th>
-          <th>data</th>
-        </tr>
-        <tr>
           <th>reblock</th>
-          <th></th>
-          <th></th>
+          <th>var_1</th>
+          <th>var_2</th>
+          <th>cov</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <th>0 </th>
-          <th>data</th>
-          <td> 0.633775</td>
+          <th>0</th>
+          <td>0</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.633775</td>
         </tr>
         <tr>
-          <th>1 </th>
-          <th>data</th>
-          <td> 0.628821</td>
+          <th>1</th>
+          <td>1</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.628821</td>
         </tr>
         <tr>
-          <th>2 </th>
-          <th>data</th>
-          <td> 0.621329</td>
+          <th>2</th>
+          <td>2</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.621329</td>
         </tr>
         <tr>
-          <th>3 </th>
-          <th>data</th>
-          <td> 0.607226</td>
+          <th>3</th>
+          <td>3</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.607226</td>
         </tr>
         <tr>
-          <th>4 </th>
-          <th>data</th>
-          <td> 0.580408</td>
+          <th>4</th>
+          <td>4</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.580408</td>
         </tr>
         <tr>
-          <th>5 </th>
-          <th>data</th>
-          <td> 0.524293</td>
+          <th>5</th>
+          <td>5</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.524293</td>
         </tr>
         <tr>
-          <th>6 </th>
-          <th>data</th>
-          <td> 0.412601</td>
+          <th>6</th>
+          <td>6</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.412601</td>
         </tr>
         <tr>
-          <th>7 </th>
-          <th>data</th>
-          <td> 0.255911</td>
+          <th>7</th>
+          <td>7</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.255911</td>
         </tr>
         <tr>
-          <th>8 </th>
-          <th>data</th>
-          <td> 0.153693</td>
+          <th>8</th>
+          <td>8</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.153693</td>
         </tr>
         <tr>
-          <th>9 </th>
-          <th>data</th>
-          <td> 0.076498</td>
+          <th>9</th>
+          <td>9</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.076498</td>
         </tr>
         <tr>
           <th>10</th>
-          <th>data</th>
-          <td> 0.045564</td>
+          <td>10</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.045564</td>
         </tr>
         <tr>
           <th>11</th>
-          <th>data</th>
-          <td> 0.025945</td>
+          <td>11</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.025945</td>
         </tr>
         <tr>
           <th>12</th>
-          <th>data</th>
-          <td> 0.012628</td>
+          <td>12</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.012628</td>
         </tr>
         <tr>
           <th>13</th>
-          <th>data</th>
-          <td> 0.006786</td>
+          <td>13</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.006786</td>
         </tr>
         <tr>
           <th>14</th>
-          <th>data</th>
-          <td> 0.005573</td>
+          <td>14</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.005573</td>
         </tr>
         <tr>
           <th>15</th>
-          <th>data</th>
-          <td> 0.006933</td>
+          <td>15</td>
+          <td>data</td>
+          <td>data</td>
+          <td>0.006933</td>
         </tr>
       </tbody>
     </table>
-    <p>16 rows × 1 columns</p>
+    <p>16 rows × 4 columns</p>
     </div>
 
 
@@ -475,21 +513,27 @@ the arrow on the plot.
       <thead>
         <tr style="text-align: right;">
           <th></th>
+          <th>reblock</th>
+          <th>ndata</th>
+          <th>variable</th>
           <th>mean</th>
-          <th>standard error</th>
-          <th>standard error error</th>
+          <th>std_err</th>
+          <th>std_err_err</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <th>data</th>
-          <td> 0.02972941</td>
-          <td> 0.02668203</td>
-          <td> 0.002377024</td>
+          <th>0</th>
+          <td>10</td>
+          <td>64</td>
+          <td>data</td>
+          <td>0.02972941</td>
+          <td>0.02668203</td>
+          <td>0.002377024</td>
         </tr>
       </tbody>
     </table>
-    <p>1 rows × 3 columns</p>
+    <p>1 rows × 6 columns</p>
     </div>
 
 
