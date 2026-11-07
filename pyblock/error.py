@@ -24,24 +24,22 @@ def ratio(
     r"""Calculate the mean and standard error of :math:`f(A,B) = A/B`.
 
     Args:
-        stats_A: Statistics (containing at least the 'mean' and 'standard error' fields)
-            for variable :math:`A`. The rows contain different values of these statistics
-            (e.g. from a reblocking analysis) if a DataFrame is passed.
+        stats_A: Statistics (containing at least the 'mean' and 'std_err'
+            fields) for variable :math:`A`. The rows contain different
+            values of these statistics if a DataFrame is passed.
         stats_B: Similarly for variable :math:`B`.
         cov_AB: Covariance between variables :math:`A` and :math:`B`. If `stats_A` and
             `stats_B` are DataFrames, then this must be a Series with the same index.
-        data_len: Number of data points ('observations') used to obtain the statistics
-            given in `stats_A` and `stats_B`. If `stats_A` and `stats_B` are DataFrames,
-            then this must be a Series with the same index.
+        data_len: Number of observations used to obtain the statistics.
 
     Returns:
-        Mean and standard error (and, if possible/relevant, optimal reblock
-        iteration) for :math:`f(A,B)`. If `stats_A` and `stats_B` are DataFrames,
-        this is a DataFrame with the same index; otherwise a Series is returned.
+        Mean and standard error (and optimal reblock iteration if present) for
+        :math:`f(A,B)`. If `stats_A` and `stats_B` are DataFrames, this is a
+        DataFrame; otherwise a Series is returned.
     """
     m_A, m_B = (stats_A["mean"], stats_B["mean"])
     mean = m_A / m_B
-    se_A, se_B = (stats_A["standard error"], stats_B["standard error"])
+    se_A, se_B = (stats_A["std_err"], stats_B["std_err"])
     std_err = abs(
         mean
         * numpy.sqrt(
@@ -70,7 +68,7 @@ def product(
     """
     m_A, m_B = (stats_A["mean"], stats_B["mean"])
     mean = m_A * m_B
-    se_A, se_B = (stats_A["standard error"], stats_B["standard error"])
+    se_A, se_B = (stats_A["std_err"], stats_B["std_err"])
     std_err = abs(
         mean
         * numpy.sqrt(
@@ -97,9 +95,10 @@ def subtraction(
     Returns:
         See `ratio`.
     """
-    mean = stats_A["mean"] - stats_B["mean"]
-    se = "standard error"
-    std_err = stats_A[se] ** 2 + stats_B[se] ** 2 - 2 * cov_AB / data_len
+    m_A, m_B = (stats_A["mean"], stats_B["mean"])
+    mean = m_A - m_B
+    se_A, se_B = (stats_A["std_err"], stats_B["std_err"])
+    std_err = se_A**2 + se_B**2 - 2 * cov_AB / data_len
     std_err = abs(numpy.sqrt(std_err))
     return _stats_summary(mean, std_err, stats_A, stats_B)
 
@@ -121,9 +120,10 @@ def addition(
     Returns:
         See `ratio`.
     """
-    mean = stats_A["mean"] + stats_B["mean"]
-    se = "standard error"
-    std_err = stats_A[se] ** 2 + stats_B[se] ** 2 + 2 * cov_AB / data_len
+    m_A, m_B = (stats_A["mean"], stats_B["mean"])
+    mean = m_A + m_B
+    se_A, se_B = (stats_A["std_err"], stats_B["std_err"])
+    std_err = se_A**2 + se_B**2 + 2 * cov_AB / data_len
     std_err = abs(numpy.sqrt(std_err))
     return _stats_summary(mean, std_err, stats_A, stats_B)
 
@@ -145,20 +145,19 @@ def _stats_summary(
     Returns:
         DataFrame or Series containing summarised statistics.
     """
-    stats_dict = {"mean": mean, "standard error": std_err}
+    stats_dict = {"mean": mean, "std_err": std_err}
+
     if isinstance(mean, pd.Series):
         stats = pd.DataFrame(stats_dict)
+        opt_col = "optimal" if "optimal" in stats_A else "optimal block"
         if isinstance(stats_A, pd.DataFrame) and isinstance(stats_B, pd.DataFrame):
-            if (
-                "optimal block" in stats_A.columns
-                and "optimal block" in stats_B.columns
-            ):
+            if opt_col in stats_A.columns and opt_col in stats_B.columns:
                 opt_A = pd_utils.optimal_block(stats_A)
                 opt_B = pd_utils.optimal_block(stats_B)
                 if opt_A > opt_B:
-                    stats["optimal block"] = stats_A["optimal block"]
+                    stats[opt_col] = stats_A[opt_col].to_numpy()
                 else:
-                    stats["optimal block"] = stats_B["optimal block"]
+                    stats[opt_col] = stats_B[opt_col].to_numpy()
     else:
         stats = pd.Series(stats_dict)
     return stats

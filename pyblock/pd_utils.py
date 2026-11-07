@@ -14,27 +14,34 @@ def reblock(
     data: pd.Series | pd.DataFrame,
     axis: int = 0,
     weights: pd.Series | pd.DataFrame | None = None,
-) -> tuple[pd.Series, pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Blocking analysis of correlated data.
 
     Args:
-        data: Data to be blocked. See `axis` for order.
-        axis: If non-zero, variables in data are in rows with the columns
-            corresponding to the observation values. Blocking is then performed along
-            the rows. Otherwise each column is a variable, observations are in the
-            rows and blocking is performed down the columns. Only used if data is
-            a DataFrame.
+        data: Data to be blocked. If a Series, a single variable is analysed.
+            If a DataFrame, variables are analysed along the given `axis`.
+        axis: If non-zero, variables in data are in rows with columns
+            corresponding to observations. Otherwise each column is a variable,
+            observations are in rows, and blocking is performed down columns.
+            Only used if data is a DataFrame.
         weights: A 1D weighting of the data to be reblocked. For multidimensional
-            data an identical weighting is applied to the data for each variable.
+            data, an identical weighting is applied to each variable.
 
     Returns:
-        A tuple containing:
-            - data_len: Number of data points used in each reblocking iteration.
-              Note some reblocking iterations discard a data point if there were
-              an odd number of data points in the previous iteration.
-            - block_info: Mean, standard error and estimated standard error for each
-              variable at each reblock step.
-            - covariance: Covariance matrix at each reblock step.
+        A tuple of `(stats_df, cov_df)`:
+            - stats_df: A tidy DataFrame with columns:
+                * reblock: Reblock iteration index (0, 1, 2, ...).
+                * ndata: Number of data points in this blocking iteration.
+                * variable: Label of the variable.
+                * mean: Sample mean.
+                * std_err: Standard error.
+                * std_err_err: Estimated error in the standard error.
+                * optimal: Boolean flag indicating if this iteration is optimal.
+            - cov_df: A tidy DataFrame with columns:
+                * reblock: Reblock iteration index.
+                * var_1: First variable label.
+                * var_2: Second variable label.
+                * cov: Covariance between var_1 and var_2.
 
     Raises:
         TypeError: If data is not a pandas Series or DataFrame.
@@ -71,156 +78,133 @@ def reblock(
     data_size = data.shape[axis]
     optimal_blocks = pyblock.blocking.find_optimal_block(data_size, block_stats)
 
-    iblock = [stat.block for stat in block_stats]
-    data_len = pd.Series(
-        [stat.ndata for stat in block_stats], index=iblock, name="data length"
-    )
-    data_len.index.name = "reblock"
+    nvars = len(columns)
+    stats_rows = []
+    cov_rows = []
 
-    data_dict: dict[tuple, list] = {}
-    for ivar, col in enumerate(columns):
-        if len(columns) == 1:
-            means = [
-                (
-                    numpy.asarray(s.mean).item()
-                    if numpy.asarray(s.mean).ndim == 0
-                    else s.mean[0]
-                )
-                for s in block_stats
-            ]
-            std_errs = [
-                (
-                    numpy.asarray(s.std_err).item()
-                    if numpy.asarray(s.std_err).ndim == 0
-                    else s.std_err[0]
-                )
-                for s in block_stats
-            ]
-            std_err_errs = [
-                (
-                    numpy.asarray(s.std_err_err).item()
-                    if numpy.asarray(s.std_err_err).ndim == 0
-                    else s.std_err_err[0]
-                )
-                for s in block_stats
-            ]
-        else:
-            means = [s.mean[ivar] for s in block_stats]
-            std_errs = [s.std_err[ivar] for s in block_stats]
-            std_err_errs = [s.std_err_err[ivar] for s in block_stats]
-
-        opt_flags = [False] * len(block_stats)
-        opt_idx = optimal_blocks[ivar]
-        if 0 <= opt_idx < len(block_stats):
-            opt_flags[opt_idx] = True
-
-        data_dict[(col, "mean")] = means
-        data_dict[(col, "standard error")] = std_errs
-        data_dict[(col, "standard error error")] = std_err_errs
-        data_dict[(col, "optimal block")] = opt_flags
-
-    multi_keys = pd.MultiIndex.from_tuples(data_dict.keys())
-    block_info = pd.DataFrame(data_dict, index=iblock, columns=multi_keys)
-    block_info.index.name = "reblock"
-
-    covariance = []
     for stat in block_stats:
-        cov = numpy.array(stat.cov, ndmin=2)
-        covariance.append(pd.DataFrame(cov, index=columns, columns=columns))
-    covariance = pd.concat(covariance, keys=iblock)
-    covariance.index.names = ["reblock", ""]
+        b = stat.block
+        n = stat.ndata
+        cov_matrix = numpy.array(stat.cov, ndmin=2)
 
-    return (data_len, block_info, covariance)
+        for ivar, col in enumerate(columns):
+            m = stat.mean.item() if nvars == 1 else stat.mean[ivar]
+            se = stat.std_err.item() if nvars == 1 else stat.std_err[ivar]
+            see = stat.std_err_err.item() if nvars == 1 else stat.std_err_err[ivar]
+            is_opt = b == optimal_blocks[ivar]
+            stats_rows.append(
+                {
+                    "reblock": b,
+                    "ndata": n,
+                    "variable": col,
+                    "mean": m,
+                    "std_err": se,
+                    "std_err_err": see,
+                    "optimal": is_opt,
+                }
+            )
+
+        for i, var_1 in enumerate(columns):
+            for j, var_2 in enumerate(columns):
+                cov_rows.append(
+                    {
+                        "reblock": b,
+                        "var_1": var_1,
+                        "var_2": var_2,
+                        "cov": cov_matrix[i, j].item(),
+                    }
+                )
+
+    stats_df = pd.DataFrame(stats_rows)
+    cov_df = pd.DataFrame(cov_rows)
+
+    return stats_df, cov_df
 
 
-def optimal_block(block_sub_info: pd.DataFrame | pd.Series) -> int | float:
+def optimal_block(df: pd.DataFrame | pd.Series) -> int | float:
     """Get the optimal block value from the reblocking data.
 
     Args:
-        block_sub_info: Reblocking data (i.e. the second item of the tuple returned by
-            `reblock`), or a subset thereof containing the statistics columns for
-            one or more data items.
+        df: Tidy reblocking DataFrame as returned by `reblock`, or a subset
+            thereof for one or more variables.
 
     Returns:
-        Reblocking index corresponding to the reblocking iteration at which serial
-        correlation has been removed (as estimated by the procedure in
-        `pyblock.blocking.find_optimal_block`). If multiple data sets are passed
-        in block_sub_info, this is the maximum index out of all data sets. Set to
-        inf if an optimal block is not found for a data set.
+        Optimal reblock iteration (or maximum across variables if multiple).
+        Returns inf if no optimal block was found.
 
     Raises:
-        ValueError: If block_sub_info contains no Series or column in DataFrame
-            named 'optimal block', or if multiple entries are listed as optimal.
-        TypeError: If block_sub_info is neither a Series nor a DataFrame.
+        TypeError: If df is not a DataFrame or Series.
+        ValueError: If no optimal block column is present or if multiple entries
+            are marked optimal for the same variable.
     """
-    if isinstance(block_sub_info, pd.Series):
-        name = block_sub_info.name
-        is_opt = False
-        if isinstance(name, tuple):
-            is_opt = name[-1] == "optimal block"
-        elif isinstance(name, str):
-            is_opt = "optimal block" in name
-        if not is_opt:
+    if isinstance(df, pd.Series):
+        if "optimal" in df.index or "optimal block" in df.index:
+            opt_col = "optimal" if "optimal" in df.index else "optimal block"
+            return df["reblock"] if df[opt_col] else float("inf")
+        name = str(df.name) if df.name is not None else ""
+        if "optimal" not in name and "optimal block" not in name:
             raise ValueError("No optimal block data")
-        iterator = [("optimal block", block_sub_info)]
-    elif isinstance(block_sub_info, pd.DataFrame):
-        level = block_sub_info.columns.nlevels - 1
-        opt_cols = [
-            col == "optimal block"
-            for col in block_sub_info.columns.get_level_values(level)
-        ]
-        if not any(opt_cols):
-            raise ValueError("No optimal block data")
-        iterator = block_sub_info.loc[:, opt_cols].items()
-    else:
-        raise TypeError(
-            f"Expected Series or DataFrame, got {type(block_sub_info).__name__}"
-        )
+        opts = df[df.astype(bool)].index
+        if len(opts) == 0:
+            return float("inf")
+        if len(opts) == 1:
+            return opts[0]
+        raise ValueError("Multiple entries listed as optimal.")
 
-    opt: int | float = -1
-    for name, col in iterator:
-        # Boolean check: works for bool True or non-empty string
-        if col.dtype == bool:
-            col_opt = col[col].index
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError(f"Expected pandas DataFrame or Series, got {type(df).__name__}")
+
+    opt_col = (
+        "optimal"
+        if "optimal" in df.columns
+        else ("optimal block" if "optimal block" in df.columns else None)
+    )
+    if opt_col is None:
+        raise ValueError("No optimal block column found")
+
+    var_col = "variable" if "variable" in df.columns else None
+    groups = df.groupby(var_col, sort=False) if var_col else [(None, df)]
+
+    max_opt: int | float = -1
+    for _, group in groups:
+        if "reblock" in group.columns:
+            opts = group.loc[group[opt_col].astype(bool), "reblock"]
         else:
-            col_opt = col[col.astype(bool)].index
-        if len(col_opt) == 0:
-            opt = float("inf")
-        elif len(col_opt) == 1:
-            opt = max(col_opt[0], opt)
-        else:
+            opts = group.index[group[opt_col].astype(bool)]
+        if len(opts) == 0:
+            return float("inf")
+        if len(opts) > 1:
             raise ValueError("Multiple entries listed as optimal.")
+        opt_val = opts.iloc[0] if hasattr(opts, "iloc") else opts[0]
+        max_opt = max(max_opt, opt_val)
 
-    return opt
+    return max_opt
 
 
-def reblock_summary(block_sub_info: pd.DataFrame | pd.Series) -> pd.DataFrame:
+def reblock_summary(df: pd.DataFrame) -> pd.DataFrame:
     """Get the data corresponding to the optimal block from the reblocking data.
 
     Args:
-        block_sub_info: Reblocking data (i.e. the second item of the tuple returned by
-            `reblock`), or a subset thereof containing the statistics columns for
-            one or more data items.
+        df: Tidy reblocking statistics DataFrame as returned by `reblock`.
 
     Returns:
-        Mean, standard error and estimate of the error in the standard error
-        corresponding to the optimal block size in the reblocking data (or largest
-        optimal size if multiple data sets are given). The index is labelled with
-        the data name, if known. An empty DataFrame is returned if no optimal block
-        size was found.
+        DataFrame containing the statistics for each variable at the optimal block size
+        (or largest optimal size if multiple variables are given).
+        Returns an empty DataFrame if no optimal block was found.
+
+    Raises:
+        TypeError: If df is not a pandas DataFrame.
     """
-    opt = optimal_block(block_sub_info)
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError(f"Expected pandas DataFrame, got {type(df).__name__}")
+    opt = optimal_block(df)
     if opt < float("inf"):
-        summary = block_sub_info.loc[opt]
-        # Convert to DataFrame, with statistics in columns.
-        if summary.index.nlevels == 1:
-            # Sadly don't know the data name; leave to user.
-            summary = pd.DataFrame(summary).T
+        if "reblock" in df.columns:
+            summary = df[df["reblock"] == opt].copy()
         else:
-            # Have hierarchical index; can pivot into a DataFrame.
-            # Each row will be labelled by the data name.
-            summary = summary.unstack()
-        summary = summary.drop(columns="optimal block")
-    else:
-        summary = pd.DataFrame()
-    return summary
+            summary = df.loc[[opt]].copy()
+        for col in ("optimal", "optimal block"):
+            if col in summary.columns:
+                summary = summary.drop(columns=col)
+        return summary.reset_index(drop=True)
+    return pd.DataFrame()

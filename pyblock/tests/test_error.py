@@ -12,18 +12,24 @@ def error_dataset():
     rand = np.random.RandomState(seed=5)
     ndata = 2**5
     data = pd.DataFrame({1: rand.randn(ndata), 2: rand.randn(ndata)})
-    data_len, reblock, cov_12 = pyblock.pd_utils.reblock(data)
-    cov_12 = cov_12.xs(1, level=1)[2]
-    ratio = pd.DataFrame(
+    reblock_df, cov_df = pyblock.pd_utils.reblock(data)
+    reblock_1 = reblock_df[reblock_df["variable"] == 1].reset_index(drop=True)
+    reblock_2 = reblock_df[reblock_df["variable"] == 2].reset_index(drop=True)
+    cov_12 = cov_df[(cov_df["var_1"] == 1) & (cov_df["var_2"] == 2)]["cov"].reset_index(
+        drop=True
+    )
+    data_len = reblock_1["ndata"]
+
+    expected_ratio = pd.DataFrame(
         {
-            "standard error": {
+            "std_err": {
                 0: 0.66458146620536607,
                 1: 0.75702195760340563,
                 2: 0.71587945049229107,
                 3: 0.68021031918966046,
                 4: 0.16281610758487003,
             },
-            "optimal block": {0: False, 1: False, 2: False, 3: True, 4: False},
+            "optimal": {0: False, 1: False, 2: False, 3: True, 4: False},
             "mean": {
                 0: -0.086689548180912318,
                 1: -0.086689548180912304,
@@ -33,72 +39,71 @@ def error_dataset():
             },
         }
     )
-    ratio.index.name = "reblock"
-    return data_len, reblock, cov_12, ratio
+    return reblock_1, reblock_2, cov_12, data_len, expected_ratio
 
 
 class TestError:
     def test_ratio(self, error_dataset):
-        data_len, reblock, cov_12, expected_ratio = error_dataset
-        ratio = pyblock.error.ratio(reblock[1], reblock[2], cov_12, data_len)
-        # Compare numeric data in the same ordering
-        test = ratio.drop("optimal block", axis=1).sort_index(axis=1)
-        benchmark = expected_ratio.drop("optimal block", axis=1).sort_index(axis=1)
+        reblock_1, reblock_2, cov_12, data_len, expected_ratio = error_dataset
+        ratio = pyblock.error.ratio(reblock_1, reblock_2, cov_12, data_len)
+        test = ratio[["mean", "std_err"]]
+        benchmark = expected_ratio[["mean", "std_err"]]
         np.testing.assert_array_almost_equal(benchmark, test, decimal=8)
-        assert ratio[ratio["optimal block"]].index[0] == 3
+        assert ratio.loc[ratio["optimal"]].index[0] == 3
 
     def test_optimal(self, error_dataset):
-        data_len, reblock, cov_12, _ = error_dataset
-        reblock[(2, "optimal block")] = False
-        reblock.loc[1, (2, "optimal block")] = True
-        ratio = pyblock.error.ratio(reblock[1], reblock[2], cov_12, data_len)
-        assert ratio[ratio["optimal block"]].index[0] == 3
+        reblock_1, reblock_2, cov_12, data_len, _ = error_dataset
+        r2 = reblock_2.copy()
+        r2["optimal"] = False
+        r2.loc[1, "optimal"] = True
+        ratio = pyblock.error.ratio(reblock_1, r2, cov_12, data_len)
+        assert ratio.loc[ratio["optimal"]].index[0] == 3
 
     def test_ratio_single(self, error_dataset):
-        data_len, reblock, cov_12, expected_ratio = error_dataset
+        reblock_1, reblock_2, cov_12, data_len, expected_ratio = error_dataset
         ratio = pyblock.error.ratio(
-            reblock[1].loc[4],
-            reblock[2].loc[4],
+            reblock_1.loc[4],
+            reblock_2.loc[4],
             cov_12[4],
             data_len[4],
         )
-        for key in ("mean", "standard error"):
+        for key in ("mean", "std_err"):
             assert ratio[key] == pytest.approx(expected_ratio.iloc[4][key], abs=1e-8)
 
     def test_product_single(self, error_dataset):
-        data_len, reblock, cov_12, _ = error_dataset
+        reblock_1, reblock_2, cov_12, data_len, _ = error_dataset
         product = pyblock.error.product(
-            reblock[1].iloc[4],
-            reblock[2].iloc[4],
+            reblock_1.iloc[4],
+            reblock_2.iloc[4],
             cov_12[4],
             data_len[4],
         )
-        benchmark = pd.Series({"mean": -0.00561329, "standard error": 0.01576336})
-        for key in ("mean", "standard error"):
+        benchmark = pd.Series({"mean": -0.00561329, "std_err": 0.01576336})
+        for key in ("mean", "std_err"):
             assert product[key] == pytest.approx(benchmark[key], abs=1e-8)
 
     def test_subtraction_single(self, error_dataset):
-        data_len, reblock, cov_12, _ = error_dataset
+        reblock_1, reblock_2, cov_12, data_len, _ = error_dataset
         subtraction = pyblock.error.subtraction(
-            reblock[1].iloc[4],
-            reblock[2].iloc[4],
+            reblock_1.iloc[4],
+            reblock_2.iloc[4],
             cov_12[4],
             data_len[4],
         )
-        benchmark = pd.Series({"mean": -0.27652270, "standard error": 0.17002344})
-        for key in ("mean", "standard error"):
+        benchmark = pd.Series({"mean": -0.27652270, "std_err": 0.17002344})
+        for key in ("mean", "std_err"):
             assert subtraction[key] == pytest.approx(benchmark[key], abs=1e-8)
 
     def test_addition_single(self, error_dataset):
-        data_len, reblock, cov_12, _ = error_dataset
+        reblock_1, reblock_2, cov_12, data_len, _ = error_dataset
         addition = pyblock.error.addition(
-            reblock[1].iloc[4],
-            reblock[2].iloc[4],
+            reblock_1.iloc[4],
+            reblock_2.iloc[4],
             cov_12[4],
             data_len[4],
         )
-        benchmark = pd.Series({"mean": 0.23240407, "standard error": 0.06664526})
-        for key in ("mean", "standard error"):
+        benchmark = pd.Series({"mean": 0.23240407, "std_err": 0.06664526})
+        for key in ("mean", "std_err"):
             assert addition[key] == pytest.approx(benchmark[key], abs=1e-8)
 
 
